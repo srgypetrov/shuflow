@@ -1,0 +1,23 @@
+{
+	"importOrder": [".app/(.*)$", ".lib/(.*)$", "^[./]"],
+	"importOrderSeparation": true,
+	"importOrderSortSpecifiers": true,
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"options": {
+				"parser": "svelte"
+			}
+		}
+	],
+	"plugins": [
+		"prettier-plugin-svelte",
+		"prettier-plugin-tailwindcss",
+		"@trivago/prettier-plugin-sort-imports"
+	],
+	"printWidth": 100,
+	"singleQuote": true,
+	"semi": false,
+	"trailingComma": "none",
+	"useTabs": true
+}
