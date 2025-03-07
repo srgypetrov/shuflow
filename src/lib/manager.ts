@@ -1,32 +1,43 @@
-import type { Page, SpotifyApi } from '@spotify/web-api-ts-sdk'
+import type {
+	Artist,
+	PlaylistedTrack,
+	SavedAlbum,
+	SavedTrack,
+	SimplifiedAlbum,
+	SimplifiedPlaylist,
+	SimplifiedTrack,
+	SpotifyApi,
+	Track
+} from '@spotify/web-api-ts-sdk'
 import { type Table } from 'dexie'
 
-import type { Config, DBAlbum, DBArtist, DBPlaylist, DBTrack } from '$lib/db'
+import type { Config, DBAlbum, DBArtist, DBEntity, DBPlaylist, DBTrack } from '$lib/db'
 import { db } from '$lib/db'
-
-type DBEntity = DBAlbum | DBArtist | DBPlaylist | DBTrack
-
-const PAGINATION_LIMIT = 50
+import { Paginator } from '$lib/spotify/paginator'
 
 export class LibraryManager {
-	private reader: LibraryReader
-	private writer: LibraryWriter
+	private readonly reader: LibraryReader
+	private readonly writer: LibraryWriter
 
-	constructor(private spotify: SpotifyApi) {
-		this.reader = new LibraryReader()
+	constructor(spotify: SpotifyApi) {
+		this.reader = new LibraryReader(spotify)
 		this.writer = new LibraryWriter(spotify)
 	}
 
-	async reset(): Promise<void> {
+	async next(): Promise<SimplifiedTrack | null> {
 		const config = await db.configGetOrCreate()
-		await this.writer.clear()
+		return this.reader.getRandomTrack(config)
+	}
+
+	async reset(): Promise<void> {
+		const [config] = await Promise.all([db.configGetOrCreate(), this.writer.clear()])
 		await this.writer.sync(config)
 	}
 
 	async sync(force = false): Promise<void> {
 		const config = await db.configGetOrCreate()
 		if (!force && !this.isSyncNeeded(config)) return
-		await this.writer.sync(config)
+		return this.writer.sync(config)
 	}
 
 	private isSyncNeeded(config: Config): boolean {
@@ -36,7 +47,7 @@ export class LibraryManager {
 }
 
 class LibraryWriter {
-	constructor(private spotify: SpotifyApi) {}
+	constructor(private readonly spotify: SpotifyApi) {}
 
 	async clear(): Promise<void> {
 		await Promise.all([
@@ -49,166 +60,170 @@ class LibraryWriter {
 
 	async sync(config: Config): Promise<void> {
 		await Promise.all([
-			config.isUsingAlbums && this.load(db.albums, this.loadAlbums.bind(this)),
-			config.isUsingArtists && this.load(db.artists, this.loadArtists.bind(this)),
-			config.isUsingPlaylist && this.load(db.playlists, this.loadPlaylists.bind(this)),
-			config.isUsingTracks && this.load(db.tracks, this.loadTracks.bind(this))
+			config.isUsingAlbums && this.update(db.albums, this.loadAlbums.bind(this)),
+			config.isUsingArtists && this.update(db.artists, this.loadArtists.bind(this)),
+			config.isUsingPlaylist && this.update(db.playlists, this.loadPlaylists.bind(this)),
+			config.isUsingTracks && this.update(db.tracks, this.loadTracks.bind(this))
 		]).catch(this.clear)
 		await db.configUpdate({ librarySyncedAt: new Date() })
 	}
 
-	private async load<T extends DBEntity>(
+	private async update<T extends DBEntity>(
 		table: Table,
 		loader: () => AsyncGenerator<T[]>
 	): Promise<void> {
 		for await (const batch of loader()) {
 			if (batch.length === 0) return
 
-			const exists = await table
+			const existing: DBEntity[] = await table
 				.where('spotifyId')
 				.anyOf(batch.map((i) => i.spotifyId))
-				.first()
+				.toArray()
 
-			await table.bulkPut(batch)
+			await table.bulkPut(batch.filter((i) => !existing.some((j) => i.spotifyId === j.spotifyId)))
 
-			if (exists) return
+			if (existing.length > 0) return
+		}
+	}
+
+	private async *loadAlbums(): AsyncGenerator<DBAlbum[]> {
+		const albums = new Paginator<SavedAlbum>(({ limit, offset }) =>
+			this.spotify.currentUser.albums.savedAlbums(limit, offset)
+		)
+		for await (const batch of albums.batches()) {
+			yield batch.map(({ album }) => ({
+				name: album.name,
+				isActive: true,
+				spotifyId: album.id,
+				spotifyUri: album.uri
+			}))
 		}
 	}
 
 	private async *loadArtists(): AsyncGenerator<DBArtist[]> {
-		let after: string | undefined
-
-		do {
-			const response = await this.spotify.currentUser.followedArtists(after, PAGINATION_LIMIT)
-			yield response.artists.items.map(
-				(artist) =>
-					({
-						spotifyId: artist.id,
-						spotifyUri: artist.uri
-					}) as DBArtist
-			)
-			after = this.getAfterParam(response.artists)
-		} while (after)
-	}
-
-	private async *loadAlbums(): AsyncGenerator<DBAlbum[]> {
-		let offset: number | undefined
-
-		do {
-			const response = await this.spotify.currentUser.albums.savedAlbums(PAGINATION_LIMIT, offset)
-			yield response.items.map(
-				({ album }) =>
-					({
-						spotifyId: album.id,
-						spotifyUri: album.uri
-					}) as DBAlbum
-			)
-			offset = this.getOffsetParam(response)
-		} while (offset)
-	}
-
-	private async *loadTracks(): AsyncGenerator<DBTrack[]> {
-		let offset: number | undefined
-
-		do {
-			const response = await this.spotify.currentUser.tracks.savedTracks(PAGINATION_LIMIT, offset)
-			yield response.items.map(
-				({ track }) =>
-					({
-						spotifyId: track.id,
-						spotifyUri: track.uri
-					}) as DBTrack
-			)
-			offset = this.getOffsetParam(response)
-		} while (offset)
+		const artists = new Paginator<Artist>(async ({ limit, after }) => {
+			return (await this.spotify.currentUser.followedArtists(after, limit)).artists
+		})
+		for await (const batch of artists.batches()) {
+			yield batch.map((artist) => ({
+				name: artist.name,
+				isActive: true,
+				spotifyId: artist.id,
+				spotifyUri: artist.uri
+			}))
+		}
 	}
 
 	private async *loadPlaylists(): AsyncGenerator<DBPlaylist[]> {
-		let offset: number | undefined
-
-		do {
-			const response = await this.spotify.currentUser.playlists.playlists(PAGINATION_LIMIT, offset)
-			yield response.items.map(
-				(playlist) =>
-					({
-						spotifyId: playlist.id,
-						spotifyUri: playlist.uri
-					}) as DBPlaylist
-			)
-			offset = this.getOffsetParam(response)
-		} while (offset)
+		const playlists = new Paginator<SimplifiedPlaylist>(({ limit, offset }) =>
+			this.spotify.currentUser.playlists.playlists(limit, offset)
+		)
+		for await (const batch of playlists.batches()) {
+			yield batch
+				.filter((playlist) => (playlist.tracks?.total ?? 0) > 0)
+				.map((playlist) => ({
+					name: playlist.name,
+					isActive: true,
+					spotifyId: playlist.id,
+					spotifyUri: playlist.uri
+				}))
+		}
 	}
 
-	private getAfterParam(page: Page<unknown>): string | undefined {
-		if (!page.next) return undefined
-		const match = page.next.match(/after=([^&]*)/)
-		return match ? decodeURIComponent(match[1]) : undefined
-	}
-
-	private getOffsetParam(page: Page<unknown>): number | undefined {
-		if (!page.next) return undefined
-		const match = page.next.match(/offset=([^&]*)/)
-		return match ? Number(decodeURIComponent(match[1])) : undefined
+	private async *loadTracks(): AsyncGenerator<DBTrack[]> {
+		const tracks = new Paginator<SavedTrack>(({ limit, offset }) =>
+			this.spotify.currentUser.tracks.savedTracks(limit, offset)
+		)
+		for await (const batch of tracks.batches()) {
+			yield batch.map(({ track }) => ({
+				name: track.name,
+				isActive: true,
+				spotifyId: track.id,
+				spotifyUri: track.uri
+			}))
+		}
 	}
 }
 
 class LibraryReader {
-	static async getRandomTrack(): Promise<Track | null> {
-		const strategy = [
-			this.selectFromArtists,
-			this.selectFromAlbums,
-			this.selectFromPlaylists,
-			this.selectDirectly
-		][Math.floor(Math.random() * 4)]
+	constructor(
+		private readonly spotify: SpotifyApi,
+		private readonly maxRetries = 20
+	) {}
 
-		return strategy().catch(() => this.selectDirectly())
+	async getRandomTrack(config: Config, retries = 0): Promise<SimplifiedTrack | null> {
+		const strategies = [
+			config.isUsingAlbums ? this.fromAlbums : null,
+			config.isUsingArtists ? this.fromArtists : null,
+			config.isUsingPlaylist ? this.fromPlaylists : null,
+			config.isUsingTracks ? this.fromTracks : null
+		].filter((strategy) => strategy !== null)
+		if (strategies.length === 0 || retries > this.maxRetries) return null
+
+		const track = await strategies[Math.floor(Math.random() * strategies.length)]()
+		return track ? track : this.getRandomTrack(config, retries + 1)
 	}
 
-	private static async selectFromArtists(): Promise<Track | null> {
-		const artist = await db.artists
-			.orderBy(':id')
-			.offset(Math.random() * (await db.artists.count()))
-			.first()
+	private async getRandomRecord<T extends DBEntity>(table: Table): Promise<T | null> {
+		const minId = await table.orderBy('id').first()
+		const maxId = await table.orderBy('id').last()
+		if (!minId || !maxId) return null
+
+		const randomId = Math.floor(Math.random() * (maxId.id - minId.id + 1)) + minId.id
+		return table.get(randomId)
+	}
+
+	private async fromAlbums(spotifyId?: string): Promise<SimplifiedTrack | null> {
+		if (!spotifyId) {
+			const album = await this.getRandomRecord(db.albums)
+			if (!album) return null
+			spotifyId = album.spotifyId
+		}
+
+		const tracks = (await this.spotify.albums.tracks(spotifyId)).items
+		return tracks.length > 0 ? tracks[Math.floor(Math.random() * tracks.length)] : null
+	}
+
+	private async fromArtists(): Promise<SimplifiedTrack | null> {
+		const artist = await this.getRandomRecord(db.artists)
 		if (!artist) return null
 
-		const albums = await db.albums.where('artistIds').equals(artist.id).toArray()
+		const albums = await Array.fromAsync(
+			new Paginator<SimplifiedAlbum>(({ limit, offset }) =>
+				this.spotify.artists.albums(artist.spotifyId, 'album,single', undefined, limit, offset)
+			)
+		)
 		if (!albums.length) return null
 
 		const album = albums[Math.floor(Math.random() * albums.length)]
-		return this.selectFromAlbum(album.id)
+		return this.fromAlbums(album.id)
 	}
 
-	private static async selectFromAlbums(): Promise<Track | null> {
-		const album = await db.albums
-			.orderBy(':id')
-			.offset(Math.random() * (await db.albums.count()))
-			.first()
-		return album ? this.selectFromAlbum(album.id) : null
+	private async fromPlaylists(): Promise<SimplifiedTrack | null> {
+		const playlist = await this.getRandomRecord(db.playlists)
+		if (!playlist) return null
+
+		const items = await Array.fromAsync(
+			new Paginator<PlaylistedTrack>(({ limit, offset }) =>
+				this.spotify.playlists.getPlaylistItems(
+					playlist.spotifyId,
+					undefined,
+					undefined,
+					limit,
+					offset
+				)
+			)
+		)
+		const tracks = items
+			.map((item) => item.track)
+			.filter((track): track is Track => track.type === 'track')
+		return tracks.length > 0 ? tracks[Math.floor(Math.random() * tracks.length)] : null
 	}
 
-	private static async selectFromAlbum(albumId: string): Promise<Track | null> {
-		return db.tracks
-			.where('albumId')
-			.equals(albumId)
-			.offset(Math.random() * (await db.tracks.where('albumId').equals(albumId).count()))
-			.first()
-	}
+	private async fromTracks(): Promise<SimplifiedTrack | null> {
+		const track = await this.getRandomRecord(db.tracks)
+		if (!track) return null
 
-	private static async selectFromPlaylists(): Promise<Track | null> {
-		const playlist = await db.playlists
-			.orderBy(':id')
-			.offset(Math.random() * (await db.playlists.count()))
-			.first()
-		if (!playlist?.trackIds?.length) return null
-
-		const trackId = playlist.trackIds[Math.floor(Math.random() * playlist.trackIds.length)]
-		return db.tracks.get(trackId) ?? null
-	}
-
-	private static async selectDirectly(): Promise<Track | null> {
-		return db.tracks
-			.orderBy(':id')
-			.offset(Math.random() * (await db.tracks.count()))
-			.first()
+		return await this.spotify.tracks.get(track.spotifyId)
 	}
 }

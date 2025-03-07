@@ -2,7 +2,7 @@ import Dexie, { Entity, type EntityTable, type InsertType, type UpdateSpec } fro
 
 const VERSION = 1
 
-class DBAlbum extends Entity<DB> {
+class AlbumTable extends Entity<DB> {
 	id!: number
 	isActive!: boolean
 	name!: string
@@ -10,7 +10,7 @@ class DBAlbum extends Entity<DB> {
 	spotifyUri!: string
 }
 
-class DBArtist extends Entity<DB> {
+class ArtistTable extends Entity<DB> {
 	id!: number
 	isActive!: boolean
 	name!: string
@@ -18,7 +18,7 @@ class DBArtist extends Entity<DB> {
 	spotifyUri!: string
 }
 
-class DBPlaylist extends Entity<DB> {
+class PlaylistTable extends Entity<DB> {
 	id!: number
 	isActive!: boolean
 	name!: string
@@ -26,7 +26,7 @@ class DBPlaylist extends Entity<DB> {
 	spotifyUri!: string
 }
 
-class DBTrack extends Entity<DB> {
+class TrackTable extends Entity<DB> {
 	id!: number
 	isActive!: boolean
 	name!: string
@@ -34,7 +34,7 @@ class DBTrack extends Entity<DB> {
 	spotifyUri!: string
 }
 
-class Config extends Entity<DB> {
+class ConfigTable extends Entity<DB> {
 	id!: number
 	isUsingAlbums!: boolean
 	isUsingArtists!: boolean
@@ -45,10 +45,10 @@ class Config extends Entity<DB> {
 }
 
 class DB extends Dexie {
-	albums!: EntityTable<DBAlbum, 'id'>
-	artists!: EntityTable<DBArtist, 'id'>
-	playlists!: EntityTable<DBPlaylist, 'id'>
-	tracks!: EntityTable<DBTrack, 'id'>
+	albums!: EntityTable<AlbumTable, 'id'>
+	artists!: EntityTable<ArtistTable, 'id'>
+	playlists!: EntityTable<PlaylistTable, 'id'>
+	tracks!: EntityTable<TrackTable, 'id'>
 
 	protected config!: EntityTable<Config, 'id'>
 
@@ -61,11 +61,11 @@ class DB extends Dexie {
 			playlists: '++id, isActive, &spotifyId',
 			tracks: '++id, isActive, &spotifyId'
 		})
-		this.albums.mapToClass(DBAlbum)
-		this.artists.mapToClass(DBArtist)
-		this.config.mapToClass(Config)
-		this.playlists.mapToClass(DBPlaylist)
-		this.tracks.mapToClass(DBTrack)
+		this.albums.mapToClass(AlbumTable)
+		this.artists.mapToClass(ArtistTable)
+		this.config.mapToClass(ConfigTable)
+		this.playlists.mapToClass(PlaylistTable)
+		this.tracks.mapToClass(TrackTable)
 	}
 
 	async configGetOrCreate(): Promise<Config> {
@@ -93,4 +93,9 @@ class DB extends Dexie {
 }
 
 export const db = new DB()
-export type { Config, DBAlbum, DBArtist, DBPlaylist, DBTrack }
+export type Config = InsertType<ConfigTable, 'id'>
+export type DBAlbum = InsertType<AlbumTable, 'id'>
+export type DBArtist = InsertType<ArtistTable, 'id'>
+export type DBPlaylist = InsertType<PlaylistTable, 'id'>
+export type DBTrack = InsertType<TrackTable, 'id'>
+export type DBEntity = DBAlbum | DBArtist | DBPlaylist | DBTrack
