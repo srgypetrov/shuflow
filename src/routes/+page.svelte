@@ -4,11 +4,11 @@
 
 	import { goto } from '$app/navigation'
 
+	import { LibraryManager } from '$lib/manager.svelte'
 	import Player from '$lib/player.svelte'
 	import { spotify } from '$lib/spotify/auth'
-	import type { SpotifyUserData } from '$lib/types/spotify'
 
-	let userData: SpotifyUserData | null = $state(null)
+	let manager: LibraryManager = new LibraryManager(spotify)
 	let token: AccessToken | null = $state(null)
 	let currentTrackUri: string | null = $state(null)
 
@@ -18,33 +18,11 @@
 			goto('/login')
 			return
 		}
-
-		const savedData = localStorage.getItem('spotifyUserData')
-		if (savedData) {
-			userData = JSON.parse(savedData)
-			return
-		}
-
-		const [tracksRes, playlistsRes, albumsRes, artistsRes] = await Promise.all([
-			spotify.currentUser.tracks.savedTracks(),
-			spotify.currentUser.playlists.playlists(),
-			spotify.currentUser.albums.savedAlbums(),
-			spotify.currentUser.followedArtists()
-		])
-
-		userData = {
-			tracks: tracksRes.items.map((item) => item.track),
-			playlists: playlistsRes.items.map((item) => item),
-			albums: albumsRes.items.map((item) => item.album),
-			artists: artistsRes.artists.items.map((item) => item)
-		}
-
-		localStorage.setItem('spotifyUserData', JSON.stringify(userData))
+		await manager.sync()
 	})
 
 	function logout() {
 		spotify.logOut()
-		localStorage.removeItem('spotifyUserData')
 		goto('/login')
 	}
 
@@ -53,7 +31,7 @@
 	}
 </script>
 
-{#if userData}
+{#if manager}
 	<main class="container mx-auto p-4">
 		<div class="mb-4 flex justify-end">
 			<button
@@ -72,42 +50,11 @@
 
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<div class="rounded border p-4 shadow">
-				<h2 class="mb-4 text-xl font-bold">Любимые треки</h2>
 				<ul>
-					{#each userData.tracks as track}
-						<li class="mb-2">
-							<button type="button" onpointerdown={() => handleTrackSelect(track.uri)}>
-								{track.name} - {track.artists.map((a) => a.name).join(', ')}
-							</button>
-						</li>
-					{/each}
-				</ul>
-			</div>
-
-			<div class="rounded border p-4 shadow">
-				<h2 class="mb-4 text-xl font-bold">Плейлисты</h2>
-				<ul>
-					{#each userData.playlists as playlist}
-						<li class="mb-2">{playlist.name} ({playlist.tracks?.total} треков)</li>
-					{/each}
-				</ul>
-			</div>
-
-			<div class="rounded border p-4 shadow">
-				<h2 class="mb-4 text-xl font-bold">Сохраненные альбомы</h2>
-				<ul>
-					{#each userData.albums as album}
-						<li class="mb-2">{album.name} - {album.artists.map((a) => a.name).join(', ')}</li>
-					{/each}
-				</ul>
-			</div>
-
-			<div class="rounded border p-4 shadow">
-				<h2 class="mb-4 text-xl font-bold">Отслеживаемые артисты</h2>
-				<ul>
-					{#each userData.artists as artist}
-						<li class="mb-2">{artist.name}</li>
-					{/each}
+					<li class="mb-2">Albums: {manager.albumsCount.value}</li>
+					<li class="mb-2">Artists: {manager.artistsCount.value}</li>
+					<li class="mb-2">Playlists: {manager.playlistsCount.value}</li>
+					<li class="mb-2">Tracks: {manager.tracksCount.value}</li>
 				</ul>
 			</div>
 		</div>

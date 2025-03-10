@@ -9,15 +9,21 @@ import type {
 	SpotifyApi,
 	Track
 } from '@spotify/web-api-ts-sdk'
-import { type Table } from 'dexie'
+import type { Table } from 'dexie'
 
 import type { Config, DBAlbum, DBArtist, DBEntity, DBPlaylist, DBTrack } from '$lib/db'
 import { db } from '$lib/db'
 import { Paginator } from '$lib/spotify/paginator'
+import { stateQuery } from '$lib/stateQuery.svelte'
 
 export class LibraryManager {
 	private readonly reader: LibraryReader
 	private readonly writer: LibraryWriter
+
+	albumsCount = stateQuery(() => db.albums.count())
+	artistsCount = stateQuery(() => db.artists.count())
+	playlistsCount = stateQuery(() => db.playlists.count())
+	tracksCount = stateQuery(() => db.tracks.count())
 
 	constructor(spotify: SpotifyApi) {
 		this.reader = new LibraryReader(spotify)
@@ -41,6 +47,7 @@ export class LibraryManager {
 	}
 
 	private isSyncNeeded(config: Config): boolean {
+		if (!config.librarySyncedAt) return true
 		const diff = new Date().getTime() - config.librarySyncedAt.getTime()
 		return diff > 1000 * 60 * 60 * 24
 	}

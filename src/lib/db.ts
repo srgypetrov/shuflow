@@ -1,4 +1,5 @@
-import Dexie, { Entity, type EntityTable, type InsertType, type UpdateSpec } from 'dexie'
+import type { EntityTable, InsertType, Table, UpdateSpec } from 'dexie'
+import Dexie, { Entity } from 'dexie'
 
 const VERSION = 1
 
@@ -78,8 +79,7 @@ class DB extends Dexie {
 					isUsingArtists: true,
 					isUsingPlaylist: true,
 					isUsingTracks: true,
-					libraryCreatedAt: new Date(),
-					librarySyncedAt: new Date()
+					libraryCreatedAt: new Date()
 				} as Config
 				await this.config.add(config)
 			}
@@ -99,3 +99,6 @@ export type DBArtist = InsertType<ArtistTable, 'id'>
 export type DBPlaylist = InsertType<PlaylistTable, 'id'>
 export type DBTrack = InsertType<TrackTable, 'id'>
 export type DBEntity = DBAlbum | DBArtist | DBPlaylist | DBTrack
+export type EntityName = keyof {
+	[K in keyof DB as DB[K] extends Table<unknown> ? K : never]: never
+}
