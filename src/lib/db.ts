@@ -1,45 +1,46 @@
-import type { EntityTable, InsertType, Table, UpdateSpec } from 'dexie'
+import type { EntityTable, InsertType, UpdateSpec } from 'dexie'
 import Dexie, { Entity } from 'dexie'
 
 const VERSION = 1
 
+export const enum Binary {
+	OFF = 0,
+	ON = 1
+}
+
 class AlbumTable extends Entity<DB> {
 	id!: number
-	isActive!: boolean
+	isActive!: Binary
 	name!: string
 	spotifyId!: string
-	spotifyUri!: string
 }
 
 class ArtistTable extends Entity<DB> {
 	id!: number
-	isActive!: boolean
+	isActive!: Binary
 	name!: string
 	spotifyId!: string
-	spotifyUri!: string
 }
 
 class PlaylistTable extends Entity<DB> {
 	id!: number
-	isActive!: boolean
+	isActive!: Binary
 	name!: string
 	spotifyId!: string
-	spotifyUri!: string
 }
 
 class TrackTable extends Entity<DB> {
 	id!: number
-	isActive!: boolean
+	isActive!: Binary
 	name!: string
 	spotifyId!: string
-	spotifyUri!: string
 }
 
 class ConfigTable extends Entity<DB> {
 	id!: number
 	isUsingAlbums!: boolean
 	isUsingArtists!: boolean
-	isUsingPlaylist!: boolean
+	isUsingPlaylists!: boolean
 	isUsingTracks!: boolean
 	libraryCreatedAt!: Date
 	librarySyncedAt!: Date
@@ -77,7 +78,7 @@ class DB extends Dexie {
 					id: VERSION,
 					isUsingAlbums: true,
 					isUsingArtists: true,
-					isUsingPlaylist: true,
+					isUsingPlaylists: true,
 					isUsingTracks: true,
 					libraryCreatedAt: new Date()
 				} as Config
@@ -99,6 +100,3 @@ export type DBArtist = InsertType<ArtistTable, 'id'>
 export type DBPlaylist = InsertType<PlaylistTable, 'id'>
 export type DBTrack = InsertType<TrackTable, 'id'>
 export type DBEntity = DBAlbum | DBArtist | DBPlaylist | DBTrack
-export type EntityName = keyof {
-	[K in keyof DB as DB[K] extends Table<unknown> ? K : never]: never
-}

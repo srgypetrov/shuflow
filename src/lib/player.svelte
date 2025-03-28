@@ -1,26 +1,32 @@
 <script lang="ts">
 	import type { AccessToken, Track } from '@spotify/web-api-ts-sdk'
+	import { prominent } from 'color.js'
 	import { onDestroy, onMount } from 'svelte'
 
 	import Progress from '$lib/progress.svelte'
 	import { type Queue } from '$lib/queue'
 	import { spotify } from '$lib/spotify/auth'
 
-	interface Props {
+	type Props = {
 		queue: Queue<Track>
+		pageTitle: string | null
 	}
-	let { queue }: Props = $props()
+	let { queue, pageTitle = $bindable() }: Props = $props()
 
 	let accessToken: AccessToken | null
 	let deviceId: string | null = $state(null)
 	let player: Spotify.Player
-
-	let paused = $state(true)
-
-	let position = $state(0)
-
 	let track: Track | null = null
+
+	let colors: [string, string] = $state(['#2A2A2A', '#4A4A4A'])
+	let paused = $state(true)
+	let position = $state(0)
 	let displayTrack: Spotify.Track | Track | null = $state(null)
+
+	let artistName = $derived.by(() => {
+		if (!displayTrack) return null
+		return displayTrack.artists.map((a) => a.name).join(', ')
+	})
 
 	onMount(async () => {
 		setFirstTrack()
@@ -56,21 +62,43 @@
 	}
 
 	$effect(() => {
-		let interval = setInterval(async () => {
-			let playback = await player.getCurrentState()
+		const interval = setInterval(async () => {
+			const playback = await player.getCurrentState()
 			if (!playback) return
-			if (!paused) position = playback.position
-			if (track && track.duration_ms - position < 500) await nextTrack()
+
+			const delta = playback.position - position
+			if (!paused && track && delta > 0 && Math.abs(delta) < 1000) {
+				position = Math.min(playback.position, track.duration_ms)
+			}
+
+			if (track && track.duration_ms - playback.position < 500) {
+				await nextTrack()
+			}
 		}, 500)
 		return () => {
 			clearInterval(interval)
 		}
 	})
 
+	$effect(() => {
+		if (displayTrack && !paused) {
+			pageTitle = `${displayTrack.name} • ${artistName}`
+		} else {
+			pageTitle = null
+		}
+	})
+
+	async function setColors() {
+		if (!track?.album.images[0].url) return
+		const output = await prominent(track?.album.images[0].url, { amount: 2, format: 'hex' })
+		colors = output as [string, string]
+	}
+
 	async function setFirstTrack() {
 		let attempts = 0
 		while (attempts < 10) {
 			track = displayTrack = await queue.next()
+			setColors()
 			if (track !== null) return
 			await new Promise((r) => setTimeout(r, 3000))
 			attempts++
@@ -80,6 +108,8 @@
 
 	async function play() {
 		if (!deviceId || !track) return
+		setColors()
+		position = 0
 		await spotify.player.startResumePlayback(deviceId, undefined, [track.uri])
 	}
 
@@ -101,8 +131,9 @@
 		await play()
 	}
 
-	async function seek(position: number) {
-		await player.seek(position)
+	async function seek(positionNew: number) {
+		position = positionNew
+		await player.seek(positionNew)
 	}
 </script>
 
@@ -112,6 +143,7 @@
 	{:else}
 		<div class="space-y-4">
 			<div class="relative aspect-square overflow-hidden rounded-lg">
+				{colors}
 				{#if displayTrack}
 					<img
 						src={displayTrack.album.images[0]?.url}
@@ -131,7 +163,7 @@
 						{displayTrack.name}
 					</h3>
 					<p class="text-sm text-gray-400">
-						{displayTrack.artists.map((a) => a.name).join(', ')}
+						{artistName}
 					</p>
 				{/if}
 			</div>

@@ -11,7 +11,7 @@ import type {
 import type { Table } from 'dexie'
 
 import type { Config, DBAlbum, DBArtist, DBEntity, DBPlaylist, DBTrack } from '$lib/db'
-import { db } from '$lib/db'
+import { Binary, db } from '$lib/db'
 import { stateQuery } from '$lib/helpers.svelte'
 import { spotify } from '$lib/spotify/auth'
 import { Paginator } from '$lib/spotify/paginator'
@@ -20,10 +20,12 @@ export class LibraryManager {
 	private readonly reader: LibraryReader
 	private readonly writer: LibraryWriter
 
-	albumsCount = stateQuery(() => db.albums.count())
-	artistsCount = stateQuery(() => db.artists.count())
-	playlistsCount = stateQuery(() => db.playlists.count())
-	tracksCount = stateQuery(() => db.tracks.count())
+	counts = stateQuery({
+		albums: () => db.albums.where('isActive').notEqual(Binary.OFF).count(),
+		artists: () => db.artists.where('isActive').notEqual(Binary.OFF).count(),
+		playlists: () => db.playlists.where('isActive').notEqual(Binary.OFF).count(),
+		tracks: () => db.tracks.where('isActive').notEqual(Binary.OFF).count()
+	})
 
 	constructor() {
 		this.reader = new LibraryReader()
@@ -32,7 +34,7 @@ export class LibraryManager {
 
 	async next(): Promise<Track | null> {
 		const config = await db.configGetOrCreate()
-		return this.reader.getRandomTrack(config)
+		return this.reader.getRandomTrack(config, this.counts)
 	}
 
 	async reset(): Promise<void> {
@@ -69,7 +71,7 @@ class LibraryWriter {
 		await Promise.all([
 			config.isUsingAlbums && this.update(db.albums, this.loadAlbums.bind(this)),
 			config.isUsingArtists && this.update(db.artists, this.loadArtists.bind(this)),
-			config.isUsingPlaylist && this.update(db.playlists, this.loadPlaylists.bind(this)),
+			config.isUsingPlaylists && this.update(db.playlists, this.loadPlaylists.bind(this)),
 			config.isUsingTracks && this.update(db.tracks, this.loadTracks.bind(this))
 		]).catch(this.clear)
 		await db.configUpdate({ librarySyncedAt: new Date() })
@@ -100,9 +102,8 @@ class LibraryWriter {
 		for await (const batch of albums.batches()) {
 			yield batch.map(({ album }) => ({
 				name: album.name,
-				isActive: true,
-				spotifyId: album.id,
-				spotifyUri: album.uri
+				isActive: Binary.ON,
+				spotifyId: album.id
 			}))
 		}
 	}
@@ -114,9 +115,8 @@ class LibraryWriter {
 		for await (const batch of artists.batches()) {
 			yield batch.map((artist) => ({
 				name: artist.name,
-				isActive: true,
-				spotifyId: artist.id,
-				spotifyUri: artist.uri
+				isActive: Binary.ON,
+				spotifyId: artist.id
 			}))
 		}
 	}
@@ -130,9 +130,8 @@ class LibraryWriter {
 				.filter((playlist) => (playlist.tracks?.total ?? 0) > 0)
 				.map((playlist) => ({
 					name: playlist.name,
-					isActive: true,
-					spotifyId: playlist.id,
-					spotifyUri: playlist.uri
+					isActive: Binary.ON,
+					spotifyId: playlist.id
 				}))
 		}
 	}
@@ -144,9 +143,8 @@ class LibraryWriter {
 		for await (const batch of tracks.batches()) {
 			yield batch.map(({ track }) => ({
 				name: track.name,
-				isActive: true,
-				spotifyId: track.id,
-				spotifyUri: track.uri
+				isActive: Binary.ON,
+				spotifyId: track.id
 			}))
 		}
 	}
@@ -155,26 +153,43 @@ class LibraryWriter {
 class LibraryReader {
 	constructor(private readonly maxRetries = 20) {}
 
-	async getRandomTrack(config: Config, retries = 0): Promise<Track | null> {
-		const strategies = [
-			config.isUsingAlbums ? this.fromAlbums.bind(this) : null,
-			config.isUsingArtists ? this.fromArtists.bind(this) : null,
-			config.isUsingPlaylist ? this.fromPlaylists.bind(this) : null,
-			config.isUsingTracks ? this.fromTracks.bind(this) : null
-		].filter((strategy) => strategy !== null)
-		if (strategies.length === 0 || retries > this.maxRetries) return null
-
-		const track = await strategies[Math.floor(Math.random() * strategies.length)]()
-		return track ? track : this.getRandomTrack(config, retries + 1)
+	async getRandomTrack(
+		config: Config,
+		counts: { [key: string]: number | undefined },
+		retries = 0
+	): Promise<Track | null> {
+		const sources = [
+			{
+				item: this.fromAlbums.bind(this),
+				weight: counts.albums ?? 0,
+				isActive: config.isUsingAlbums
+			},
+			{
+				item: this.fromArtists.bind(this),
+				weight: counts.artists ?? 0,
+				isActive: config.isUsingArtists
+			},
+			{
+				item: this.fromPlaylists.bind(this),
+				weight: counts.playlists ?? 0,
+				isActive: config.isUsingPlaylists
+			},
+			{
+				item: this.fromTracks.bind(this),
+				weight: counts.tracks ?? 0 * 0.5,
+				isActive: config.isUsingTracks
+			}
+		].filter((source) => source.isActive)
+		if (sources.length === 0 || retries > this.maxRetries) return null
+		const track = await Picker.randomWeighted(sources)()
+		return track ? track : this.getRandomTrack(config, counts, retries + 1)
 	}
 
 	private async getRandomRecord<T extends DBEntity>(table: Table): Promise<T | null> {
-		const minId = await table.orderBy('id').first()
-		const maxId = await table.orderBy('id').last()
-		if (!minId || !maxId) return null
-
-		const randomId = Math.floor(Math.random() * (maxId.id - minId.id + 1)) + minId.id
-		return table.get(randomId)
+		const first = await table.orderBy('id').first()
+		const last = await table.orderBy('id').last()
+		if (!first || !last) return null
+		return table.get(Picker.randomId(first.id, last.id))
 	}
 
 	private async fromAlbums(album?: SimplifiedAlbum): Promise<Track | null> {
@@ -182,7 +197,7 @@ class LibraryReader {
 
 		if (!album) {
 			const record = await this.getRandomRecord(db.albums)
-			if (!record) return null
+			if (!record || record.isActive === Binary.OFF) return null
 			const { tracks: tracksPage, ...fullAlbum } = await spotify.albums.get(record.spotifyId)
 			album = { ...fullAlbum, album_group: '' }
 			tracks = tracksPage.items
@@ -191,7 +206,7 @@ class LibraryReader {
 		if (tracks.length <= 0) tracks = (await spotify.albums.tracks(album.id)).items
 		if (tracks.length <= 0) return null
 		return {
-			...tracks[Math.floor(Math.random() * tracks.length)],
+			...Picker.random(tracks),
 			album,
 			external_ids: { upc: '', isrc: '', ean: '' },
 			popularity: 0
@@ -200,22 +215,19 @@ class LibraryReader {
 
 	private async fromArtists(): Promise<Track | null> {
 		const artist = await this.getRandomRecord(db.artists)
-		if (!artist) return null
+		if (!artist || artist.isActive === Binary.OFF) return null
 
 		const albums = await Array.fromAsync(
 			new Paginator<SimplifiedAlbum>(({ limit, offset }) =>
 				spotify.artists.albums(artist.spotifyId, 'album,single', undefined, limit, offset)
 			)
 		)
-		if (!albums.length) return null
-
-		const album = albums[Math.floor(Math.random() * albums.length)]
-		return this.fromAlbums(album)
+		return albums.length > 0 ? this.fromAlbums(Picker.random(albums)) : null
 	}
 
 	private async fromPlaylists(): Promise<Track | null> {
 		const playlist = await this.getRandomRecord(db.playlists)
-		if (!playlist) return null
+		if (!playlist || playlist.isActive === Binary.OFF) return null
 
 		const items = await Array.fromAsync(
 			new Paginator<PlaylistedTrack>(({ limit, offset }) =>
@@ -225,13 +237,38 @@ class LibraryReader {
 		const tracks = items
 			.map((item) => item.track)
 			.filter((track): track is Track => track.type === 'track')
-		return tracks.length > 0 ? tracks[Math.floor(Math.random() * tracks.length)] : null
+		return tracks.length > 0 ? Picker.random(tracks) : null
 	}
 
 	private async fromTracks(): Promise<Track | null> {
 		const track = await this.getRandomRecord(db.tracks)
-		if (!track) return null
+		if (!track || track.isActive === Binary.OFF) return null
 
 		return await spotify.tracks.get(track.spotifyId)
+	}
+}
+
+class Picker {
+	static randomId(first: number, last: number) {
+		return Picker.randomValue(last - first + 1) + first
+	}
+
+	static randomValue(max: number) {
+		return Math.floor(Math.random() * max)
+	}
+
+	static random<T>(items: T[]): T {
+		return items[this.randomValue(items.length)]
+	}
+
+	static randomWeighted<T>(items: { item: T; weight: number }[]): T {
+		const random = Math.random() * items.reduce((sum, { weight }) => sum + weight, 0)
+
+		let cumulative = 0
+		for (const { item, weight } of items) {
+			cumulative += weight
+			if (random <= cumulative) return item
+		}
+		throw new Error('Picker error: failed to correctly determine a weighted item')
 	}
 }

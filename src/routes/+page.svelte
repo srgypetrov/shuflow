@@ -8,6 +8,8 @@
 	import { Queue } from '$lib/queue'
 	import { spotify } from '$lib/spotify/auth'
 
+	let pageTitle: string | null = $state(null)
+
 	let manager = new LibraryManager()
 	let queue = new Queue(manager)
 
@@ -25,6 +27,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>{pageTitle ?? 'Shuflow • Shuffle Your Favorite Music'}</title>
+</svelte:head>
+
 {#if manager}
 	<main class="container mx-auto p-4">
 		<div class="mb-4 flex justify-end">
@@ -37,16 +43,16 @@
 		</div>
 
 		<div class="flex min-h-screen items-center justify-center">
-			<Player {queue} />
+			<Player {queue} bind:pageTitle />
 		</div>
 
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<div class="rounded border p-4 shadow">
 				<ul>
-					<li class="mb-2">Albums: {manager.albumsCount.value}</li>
-					<li class="mb-2">Artists: {manager.artistsCount.value}</li>
-					<li class="mb-2">Playlists: {manager.playlistsCount.value}</li>
-					<li class="mb-2">Tracks: {manager.tracksCount.value}</li>
+					<li class="mb-2">Albums: {manager.counts.albums}</li>
+					<li class="mb-2">Artists: {manager.counts.artists}</li>
+					<li class="mb-2">Playlists: {manager.counts.playlists}</li>
+					<li class="mb-2">Tracks: {manager.counts.tracks}</li>
 				</ul>
 			</div>
 		</div>

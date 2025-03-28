@@ -1,5 +1,5 @@
 <script lang="ts">
-	interface Props {
+	type Props = {
 		duration: number
 		position: number
 		onPositionUpdate: (position: number) => void
