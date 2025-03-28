@@ -1,57 +1,47 @@
 <script lang="ts">
-	import type { AccessToken } from '@spotify/web-api-ts-sdk'
-	import { onMount } from 'svelte'
+	import type { AccessToken, Track } from '@spotify/web-api-ts-sdk'
+	import { onDestroy, onMount } from 'svelte'
 
 	import Progress from '$lib/progress.svelte'
+	import { type Queue } from '$lib/queue'
 	import { spotify } from '$lib/spotify/auth'
 
 	interface Props {
-		accessToken: AccessToken
-		trackUri: string | null
+		queue: Queue<Track>
 	}
+	let { queue }: Props = $props()
 
-	let { accessToken, trackUri }: Props = $props()
-
+	let accessToken: AccessToken | null
 	let deviceId: string | null = $state(null)
-	let duration = $state(0)
-	let paused = $state(false)
-	let position = $state(0)
-	let track: Spotify.Track | null = $state(null)
-
 	let player: Spotify.Player
 
-	$effect(() => {
-		if (trackUri && deviceId) {
-			play(trackUri)
-		}
-	})
+	let paused = $state(true)
 
-	$effect(() => {
-		let interval = setInterval(async () => {
-			let playback = await player.getCurrentState()
-			if (playback) position = playback.position
-		}, 1000)
-		return () => {
-			clearInterval(interval)
-		}
-	})
+	let position = $state(0)
 
-	onMount(() => {
+	let track: Track | null = null
+	let displayTrack: Spotify.Track | Track | null = $state(null)
+
+	onMount(async () => {
+		setFirstTrack()
+		accessToken = await spotify.getAccessToken()
 		const script = document.createElement('script')
 		script.src = 'https://sdk.scdn.co/spotify-player.js'
 		script.async = true
 		document.body.appendChild(script)
 		window.onSpotifyWebPlaybackSDKReady = init
-		return () => {
-			if (player) player.disconnect()
-		}
+	})
+
+	onDestroy(() => {
+		if (player) player.disconnect()
 	})
 
 	function init() {
 		player = new window.Spotify.Player({
+			enableMediaSession: true,
 			name: 'Shuflow',
 			getOAuthToken: (cb) => {
-				cb(accessToken.access_token)
+				if (accessToken) cb(accessToken.access_token)
 			},
 			volume: 1
 		})
@@ -59,30 +49,60 @@
 		player.addListener('not_ready', () => (deviceId = null))
 		player.addListener('player_state_changed', (playback: Spotify.PlaybackState) => {
 			if (!playback) return
-			duration = playback.duration
 			paused = playback.paused
-			position = playback.position
-			track = playback.track_window.current_track
+			displayTrack = playback.track_window.current_track
 		})
 		player.connect()
 	}
 
-	async function play(uri?: string) {
+	$effect(() => {
+		let interval = setInterval(async () => {
+			let playback = await player.getCurrentState()
+			if (!playback) return
+			if (!paused) position = playback.position
+			if (track && track.duration_ms - position < 500) await nextTrack()
+		}, 500)
+		return () => {
+			clearInterval(interval)
+		}
+	})
+
+	async function setFirstTrack() {
+		let attempts = 0
+		while (attempts < 10) {
+			track = displayTrack = await queue.next()
+			if (track !== null) return
+			await new Promise((r) => setTimeout(r, 3000))
+			attempts++
+		}
+		return null
+	}
+
+	async function play() {
+		if (!deviceId || !track) return
+		await spotify.player.startResumePlayback(deviceId, undefined, [track.uri])
+	}
+
+	async function togglePlay() {
 		if (!deviceId) return
-		await spotify.player.startResumePlayback(deviceId, undefined, uri ? [uri] : undefined)
+		if (displayTrack === track) return await play()
+		await player.togglePlay()
 	}
 
-	async function pause() {
+	async function nextTrack() {
 		if (!deviceId) return
-		await spotify.player.pausePlayback(deviceId)
+		track = await queue.next()
+		await play()
 	}
 
-	async function onTogglePlay() {
-		paused ? await play() : await pause()
+	async function previousTrack() {
+		if (!deviceId) return
+		track = await queue.previous()
+		await play()
 	}
 
-	async function onPositionUpdate(position: number) {
-		await spotify.player.seekToPosition(position)
+	async function seek(position: number) {
+		await player.seek(position)
 	}
 </script>
 
@@ -92,10 +112,10 @@
 	{:else}
 		<div class="space-y-4">
 			<div class="relative aspect-square overflow-hidden rounded-lg">
-				{#if track}
+				{#if displayTrack}
 					<img
-						src={track.album.images[0]?.url}
-						alt={track.name}
+						src={displayTrack.album.images[0]?.url}
+						alt={displayTrack.name}
 						class="h-full w-full object-cover"
 					/>
 				{:else}
@@ -106,25 +126,29 @@
 			</div>
 
 			<div class="text-center">
-				{#if track}
+				{#if displayTrack}
 					<h3 class="truncate text-lg font-bold">
-						{track.name}
+						{displayTrack.name}
 					</h3>
 					<p class="text-sm text-gray-400">
-						{track.artists.map((a) => a.name).join(', ')}
+						{displayTrack.artists.map((a) => a.name).join(', ')}
 					</p>
 				{/if}
 			</div>
 
 			<div class="flex items-center justify-center space-x-6">
-				<button class="p-2 transition-colors hover:text-green-500" aria-label="Previous track">
+				<button
+					onpointerdown={previousTrack}
+					class="p-2 transition-colors hover:text-green-500"
+					aria-label="Previous track"
+				>
 					<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
 					</svg>
 				</button>
 
 				<button
-					onpointerdown={onTogglePlay}
+					onpointerdown={togglePlay}
 					class="rounded-full bg-green-500 p-3 transition-colors hover:bg-green-400"
 					aria-label={paused ? 'Play' : 'Pause'}
 				>
@@ -139,14 +163,19 @@
 					{/if}
 				</button>
 
-				<button class="p-2 transition-colors hover:text-green-500" aria-label="Next track">
+				<button
+					onpointerdown={nextTrack}
+					class="p-2 transition-colors hover:text-green-500"
+					aria-label="Next track"
+				>
 					<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
 					</svg>
 				</button>
 			</div>
 
-			<Progress {duration} {position} {onPositionUpdate}></Progress>
+			<Progress duration={displayTrack?.duration_ms || 0} {position} onPositionUpdate={seek}
+			></Progress>
 		</div>
 	{/if}
 </div>
