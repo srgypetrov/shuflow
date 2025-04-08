@@ -2,6 +2,7 @@ export class Queue<T> {
 	private index = 0
 	private items: T[] = []
 	private promise: Promise<void> | null = null
+	private reverse = false
 
 	constructor(
 		private manager: { next(): Promise<T | null> },
@@ -25,6 +26,10 @@ export class Queue<T> {
 		}
 
 		if (this.index < this.items.length) {
+			if (this.reverse) {
+				this.reverse = false
+				this.index++
+			}
 			const item = this.items[this.index++]
 			this.schedule()
 			return item
@@ -34,6 +39,8 @@ export class Queue<T> {
 	}
 
 	previous(): T | null {
-		return this.index <= 0 ? null : this.items[--this.index]
+		if (this.index <= 0) return null
+		this.reverse = true
+		return this.items[--this.index]
 	}
 }
