@@ -8,12 +8,12 @@
 	import { spotify } from '$lib/spotify/auth'
 
 	type Props = {
+		accessToken: AccessToken
 		queue: Queue<Track>
 		pageTitle: string | null
 	}
-	let { queue, pageTitle = $bindable() }: Props = $props()
+	let { accessToken, queue, pageTitle = $bindable() }: Props = $props()
 
-	let accessToken: AccessToken | null
 	let deviceId: string | null = $state(null)
 	let player: Spotify.Player
 	let track: Track | null = null
@@ -30,7 +30,6 @@
 
 	onMount(async () => {
 		setFirstTrack()
-		accessToken = await spotify.getAccessToken()
 		const script = document.createElement('script')
 		script.src = 'https://sdk.scdn.co/spotify-player.js'
 		script.async = true
@@ -47,7 +46,7 @@
 			enableMediaSession: true,
 			name: 'Shuflow',
 			getOAuthToken: (cb) => {
-				if (accessToken) cb(accessToken.access_token)
+				cb(accessToken.access_token)
 			},
 			volume: 1
 		})

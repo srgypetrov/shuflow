@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { AccessToken } from '@spotify/web-api-ts-sdk'
 	import { onMount } from 'svelte'
 
 	import { goto } from '$app/navigation'
@@ -8,20 +9,24 @@
 	import { Queue } from '$lib/queue'
 	import { spotify } from '$lib/spotify/auth'
 
+	let accessToken: AccessToken | null = $state(null)
 	let pageTitle: string | null = $state(null)
 
 	let manager = new LibraryManager()
 	let queue = new Queue(manager)
 
 	onMount(async () => {
-		if (!(await spotify.getAccessToken())) {
+		accessToken = await spotify.getAccessToken()
+		if (!accessToken) {
 			goto('/login')
 			return
 		}
-		await manager.sync()
+		manager.sync()
 	})
 
-	function logout() {
+	async function logout() {
+		await Promise.all([queue.stop(), manager.stop()])
+		accessToken = null
 		spotify.logOut()
 		goto('/login')
 	}
@@ -31,7 +36,7 @@
 	<title>{pageTitle ?? 'Shuflow • Shuffle Your Favorite Music'}</title>
 </svelte:head>
 
-{#if manager}
+{#if accessToken}
 	<main class="container mx-auto p-4">
 		<div class="mb-4 flex justify-end">
 			<button
@@ -43,7 +48,7 @@
 		</div>
 
 		<div class="flex min-h-screen items-center justify-center">
-			<Player {queue} bind:pageTitle />
+			<Player {accessToken} {queue} bind:pageTitle />
 		</div>
 
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">

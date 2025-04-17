@@ -3,6 +3,7 @@ export class Queue<T> {
 	private items: T[] = []
 	private promise: Promise<void> | null = null
 	private reverse = false
+	private stopped = false
 
 	constructor(
 		private manager: { next(): Promise<T | null> },
@@ -10,10 +11,10 @@ export class Queue<T> {
 	) {}
 
 	private schedule(): void {
-		if (this.promise) return
+		if (this.promise || this.stopped) return
 		this.promise = this.manager.next().then((item) => {
 			this.promise = null
-			if (item === null) return
+			if (this.stopped || item === null) return
 			this.items.push(item)
 			if (this.items.length - this.index < this.size) this.schedule()
 		})
@@ -42,5 +43,10 @@ export class Queue<T> {
 		if (this.index <= 0) return null
 		this.reverse = true
 		return this.items[--this.index]
+	}
+
+	async stop(): Promise<void> {
+		this.stopped = true
+		if (this.promise) await this.promise
 	}
 }

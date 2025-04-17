@@ -42,6 +42,10 @@ export class LibraryManager {
 		await this.writer.sync(config)
 	}
 
+	async stop(): Promise<[void, void]> {
+		return Promise.all([this.reader.stop(), this.writer.stop()])
+	}
+
 	async sync(force = false): Promise<void> {
 		const config = await db.configGetOrCreate()
 		if (!force && !this.isSyncNeeded(config)) return
@@ -56,6 +60,8 @@ export class LibraryManager {
 }
 
 class LibraryWriter {
+	private promise: Promise<unknown> | null = null
+	private stopped = false
 	constructor() {}
 
 	async clear(): Promise<void> {
@@ -67,14 +73,25 @@ class LibraryWriter {
 		])
 	}
 
+	async stop(): Promise<void> {
+		this.stopped = true
+		if (this.promise) await this.promise
+	}
+
 	async sync(config: Config): Promise<void> {
-		await Promise.all([
+		this.promise = Promise.all([
 			config.isUsingAlbums && this.update(db.albums, this.loadAlbums.bind(this)),
 			config.isUsingArtists && this.update(db.artists, this.loadArtists.bind(this)),
 			config.isUsingPlaylists && this.update(db.playlists, this.loadPlaylists.bind(this)),
 			config.isUsingTracks && this.update(db.tracks, this.loadTracks.bind(this))
-		]).catch(this.clear)
-		await db.configUpdate({ librarySyncedAt: new Date() })
+		])
+			.then(async () => {
+				await db.configUpdate({ librarySyncedAt: new Date() })
+			})
+			.catch(this.clear)
+			.finally(() => {
+				this.promise = null
+			})
 	}
 
 	private async update<T extends DBEntity>(
@@ -82,7 +99,7 @@ class LibraryWriter {
 		loader: () => AsyncGenerator<T[]>
 	): Promise<void> {
 		for await (const batch of loader()) {
-			if (batch.length === 0) return
+			if (batch.length === 0 || this.stopped) return
 
 			const existing: DBEntity[] = await table
 				.where('spotifyId')
@@ -151,6 +168,8 @@ class LibraryWriter {
 }
 
 class LibraryReader {
+	private promise: Promise<Track | null> | null = null
+	private stopped = false
 	constructor(private readonly maxRetries = 20) {}
 
 	async getRandomTrack(
@@ -180,9 +199,18 @@ class LibraryReader {
 				isActive: config.isUsingTracks
 			}
 		].filter((source) => source.isActive)
-		if (sources.length === 0 || retries > this.maxRetries) return null
-		const track = await Picker.randomWeighted(sources)()
-		return track ? track : this.getRandomTrack(config, counts, retries + 1)
+		if (sources.length === 0 || retries > this.maxRetries || this.stopped) return null
+
+		this.promise = Picker.randomWeighted(sources)()
+		const track = await this.promise.finally(() => {
+			this.promise = null
+		})
+		return track || this.stopped ? track : this.getRandomTrack(config, counts, retries + 1)
+	}
+
+	async stop(): Promise<void> {
+		this.stopped = true
+		if (this.promise) await this.promise
 	}
 
 	private async getRandomRecord<T extends DBEntity>(table: Table): Promise<T | null> {

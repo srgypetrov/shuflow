@@ -6,6 +6,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Shuflow • Shuffle Your Favorite Music</title>
+</svelte:head>
+
 <div
 	class="h-full bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-200 font-sans antialiased"
 >
