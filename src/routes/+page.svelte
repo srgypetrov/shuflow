@@ -98,25 +98,12 @@
 
 			<Player {accessToken} {queue} bind:pageTitle bind:colors={colorsCurrent} />
 
-			<div class="text-center">
-				<div class="grid grid-cols-4 gap-2 mt-2 text-xs">
-					<div class="p-1.5 bg-white/5 rounded">
-						{manager.counts.tracks}
-						{manager.counts.tracks === 1 ? 'Track' : 'Tracks'}
-					</div>
-					<div class="p-1.5 bg-white/5 rounded">
-						{manager.counts.albums}
-						{manager.counts.albums === 1 ? 'Album' : 'Albums'}
-					</div>
-					<div class="p-1.5 bg-white/5 rounded">
-						{manager.counts.playlists}
-						{manager.counts.playlists === 1 ? 'Playlist' : 'Playlists'}
-					</div>
-					<div class="p-1.5 bg-white/5 rounded">
-						{manager.counts.artists}
-						{manager.counts.artists === 1 ? 'Artist' : 'Artists'}
-					</div>
-				</div>
+			<div class="text-center text-xs opacity-75 py-1 select-none !mt-0">
+				{manager.counts.tracks}
+				{manager.counts.tracks === 1 ? 'track' : 'tracks'} • {manager.counts.albums}
+				{manager.counts.albums === 1 ? 'album' : 'albums'} • {manager.counts.playlists}
+				{manager.counts.playlists === 1 ? 'playlist' : 'playlists'} • {manager.counts.artists}
+				{manager.counts.artists === 1 ? 'artist' : 'artists'}
 			</div>
 		</div>
 	</div>

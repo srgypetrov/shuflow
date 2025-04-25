@@ -4,6 +4,7 @@
 	import { onDestroy, onMount } from 'svelte'
 	import tinycolor from 'tinycolor2'
 
+	import type { PlayerItem } from '$lib/manager.svelte'
 	import Progress from '$lib/progress.svelte'
 	import { type Queue } from '$lib/queue'
 	import { spotify } from '$lib/spotify/auth'
@@ -11,22 +12,29 @@
 	type Props = {
 		accessToken: AccessToken
 		colors: string[]
-		queue: Queue<Track>
+		queue: Queue<PlayerItem>
 		pageTitle: string | null
 	}
 	let { accessToken, colors = $bindable(), queue, pageTitle = $bindable() }: Props = $props()
 
 	let deviceId: string | null = $state(null)
 	let player: Spotify.Player
-	let track: Track | null = null
+	let item: PlayerItem | null = $state(null)
 
 	let paused = $state(true)
 	let position = $state(0)
-	let displayTrack: Spotify.Track | Track | null = $state(null)
+	let track: Spotify.Track | Track | null = $state(null)
 
 	let artistName = $derived.by(() => {
-		if (!displayTrack) return null
-		return displayTrack.artists.map((a) => a.name).join(', ')
+		if (!track) return null
+		return track.artists.map((a) => a.name).join(', ')
+	})
+	let source = $derived.by(() => {
+		if (!item) return { type: 'track' }
+		if (item.artist) return { type: 'artist', name: item.artist.name }
+		if (item.album) return { type: 'album', name: item.album.name }
+		if (item.playlist) return { type: 'playlist', name: item.playlist.name }
+		return { type: 'track' }
 	})
 
 	onMount(async () => {
@@ -75,7 +83,7 @@
 		player.addListener('player_state_changed', (playback: Spotify.PlaybackState) => {
 			if (!playback) return
 			paused = playback.paused
-			displayTrack = playback.track_window.current_track
+			track = playback.track_window.current_track
 		})
 		player.connect()
 	}
@@ -86,11 +94,11 @@
 			if (!playback) return
 
 			const delta = playback.position - position
-			if (!paused && track && delta > 0 && Math.abs(delta) < 1000) {
-				position = Math.min(playback.position, track.duration_ms)
+			if (!paused && item && delta > 0 && Math.abs(delta) < 1000) {
+				position = Math.min(playback.position, item.track.duration_ms)
 			}
 
-			if (track && track.duration_ms - playback.position < 500) {
+			if (item && item.track.duration_ms - playback.position < 500) {
 				await nextTrack()
 			}
 		}, 500)
@@ -100,16 +108,16 @@
 	})
 
 	$effect(() => {
-		if (displayTrack && !paused) {
-			pageTitle = `${displayTrack.name} • ${artistName}`
+		if (track && !paused) {
+			pageTitle = `${track.name} • ${artistName}`
 		} else {
 			pageTitle = null
 		}
 	})
 
 	async function setColors() {
-		if (!track?.album.images[0].url) return
-		const from = await average(track?.album.images[0].url, { format: 'hex' })
+		if (!item?.track.album?.images[0].url) return
+		const from = await average(item.track.album.images[0].url, { format: 'hex' })
 		const to = tinycolor(from as string)
 		to.isDark() ? to.lighten(40) : to.darken(40)
 		colors = [from as string, to.toString()]
@@ -118,9 +126,11 @@
 	async function setFirstTrack() {
 		let attempts = 0
 		while (attempts < 10) {
-			track = displayTrack = await queue.next()
+			item = await queue.next()
+			if (!item) continue
+			track = item.track
 			setColors()
-			if (track !== null) return
+			if (item !== null) return
 			await new Promise((r) => setTimeout(r, 3000))
 			attempts++
 		}
@@ -128,27 +138,27 @@
 	}
 
 	async function play() {
-		if (!deviceId || !track) return
+		if (!deviceId || !item) return
 		setColors()
 		position = 0
-		await spotify.player.startResumePlayback(deviceId, undefined, [track.uri])
+		await spotify.player.startResumePlayback(deviceId, undefined, [item.track.uri])
 	}
 
 	async function togglePlay() {
 		if (!deviceId) return
-		if (displayTrack === track) return await play()
+		if (track === item?.track) return await play()
 		await player.togglePlay()
 	}
 
 	async function nextTrack() {
 		if (!deviceId) return
-		track = await queue.next()
+		item = await queue.next()
 		await play()
 	}
 
 	async function previousTrack() {
 		if (!deviceId) return
-		track = await queue.previous()
+		item = await queue.previous()
 		await play()
 	}
 
@@ -159,28 +169,31 @@
 </script>
 
 <div class="flex-1 flex flex-col justify-center">
-	{#if !deviceId || !displayTrack}
+	{#if !deviceId || !track}
 		<div class="py-4 text-center">Connecting...</div>
 	{:else}
 		<!-- Artwork -->
-		<div
-			class="relative w-full max-w-sm md:max-w-md lg:max-w-lg aspect-square mx-auto mb-8 rounded-xl overflow-hidden shadow-2xl border-4 border-white/10"
+		<button
+			type="button"
+			class="relative group w-full max-w-sm md:max-w-md lg:max-w-lg aspect-square mx-auto mb-8 rounded-xl overflow-hidden shadow-2xl border-4 border-white/10 p-0 bg-transparent cursor-default"
 		>
-			<img
-				src={displayTrack.album.images[0]?.url}
-				alt={displayTrack.name}
-				class="w-full h-full object-cover"
-			/>
-		</div>
+			<img src={track.album.images[0]?.url} alt={track.name} class="w-full h-full object-cover" />
+			<div
+				class="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-xs text-white px-2 py-1 rounded opacity-0 transition-opacity sm:group-hover:opacity-100 group-focus:opacity-100 pointer-events-none max-w-full truncate"
+			>
+				You liked this {source.type}{#if source.name}:
+					<span class="font-bold">{source.name}</span>
+				{/if}
+			</div>
+		</button>
 
 		<!-- Track Info -->
 		<div class="text-center mb-8 space-y-1 text-shadow">
-			<h2 class="text-2xl font-medium">{displayTrack.name}</h2>
+			<h2 class="text-2xl font-medium">{track.name}</h2>
 			<p class="text-sm opacity-75">{artistName}</p>
 		</div>
 
-		<Progress duration={displayTrack?.duration_ms || 0} {position} onPositionUpdate={seek}
-		></Progress>
+		<Progress duration={track?.duration_ms || 0} {position} onPositionUpdate={seek}></Progress>
 
 		<!-- Controls -->
 		<div class="flex justify-center items-center gap-4 mb-6">
@@ -217,11 +230,6 @@
 					<path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6-1.41 1.41zM16 6h2v12h-2V6z" />
 				</svg>
 			</button>
-		</div>
-
-		<!-- Source Info -->
-		<div class="text-center text-sm opacity-75">
-			From <span class="font-medium">Hurry Up, We're Dreaming</span>
 		</div>
 	{/if}
 </div>
