@@ -195,7 +195,7 @@ class LibraryReader {
 			},
 			{
 				item: this.fromTracks.bind(this),
-				weight: counts.tracks ?? 0 * 0.5,
+				weight: counts.tracks ?? 0 * 0.2,
 				isActive: config.isUsingTracks
 			}
 		].filter((source) => source.isActive)

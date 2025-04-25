@@ -50,26 +50,30 @@
 	}
 </script>
 
-<div class="group relative">
+<!-- Progress -->
+<div class="mb-8 space-y-2 relative">
 	<div
 		bind:this={divElement}
 		onpointerdown={onSeekStart}
 		onpointerup={onSeekStop}
 		onpointerleave={onSeekStop}
 		onpointermove={onSeeking}
-		class="h-2 cursor-pointer rounded-full bg-gray-600"
 		role="slider"
 		aria-valuemin={0}
 		aria-valuemax={duration}
 		aria-valuenow={positionCurrent}
+		class="relative cursor-pointer py-2 group"
 	>
 		<div
-			class="h-2 rounded-full bg-green-500 transition-all duration-100"
+			class="absolute inset-x-0 top-1/2 h-1 bg-white/10 rounded-full transform -translate-y-1/2"
+		></div>
+		<div
+			class="absolute left-0 top-1/2 h-1 bg-white transition-all duration-100 rounded-full transform -translate-y-1/2 group-hover:bg-white/70"
 			style:width={`${(positionCurrent / duration) * 100 || 0}%`}
 		></div>
 	</div>
 
-	<div class="mt-1 flex justify-between text-xs text-gray-400">
+	<div class="mt-1 flex justify-between text-xs opacity-75">
 		<span>{formatTime(positionCurrent)}</span>
 		<span>{formatTime(duration)}</span>
 	</div>

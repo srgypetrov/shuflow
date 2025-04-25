@@ -14,7 +14,9 @@
 	class="h-full bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-200 font-sans antialiased"
 >
 	<div class="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-12">
-		<div class="login-card p-6 sm:p-8 md:p-10 rounded-xl w-full max-w-md space-y-6">
+		<div
+			class="bg-white/10 border border-white/20 shadow-xl p-6 sm:p-8 md:p-10 rounded-xl w-full max-w-md space-y-6"
+		>
 			<div class="text-center space-y-5">
 				<img class="mx-auto" src="/logo.svg" alt="Logo" />
 				<h1 class="text-3xl font-light text-gray-100">SHUFLOW</h1>
@@ -41,19 +43,3 @@
 		</div>
 	</div>
 </div>
-
-<style>
-	.login-card {
-		background: rgba(255, 255, 255, 0.08);
-		backdrop-filter: blur(24px);
-		-webkit-backdrop-filter: blur(24px);
-		border: 1px solid rgba(255, 255, 255, 0.15);
-		box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-	}
-	@supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
-		.login-card {
-			background: rgba(31, 41, 55, 0.85);
-			border: 1px solid rgba(75, 85, 99, 0.5);
-		}
-	}
-</style>

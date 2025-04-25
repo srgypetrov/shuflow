@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { AccessToken, Track } from '@spotify/web-api-ts-sdk'
-	import { prominent } from 'color.js'
+	import { average } from 'color.js'
 	import { onDestroy, onMount } from 'svelte'
+	import tinycolor from 'tinycolor2'
 
 	import Progress from '$lib/progress.svelte'
 	import { type Queue } from '$lib/queue'
@@ -9,16 +10,16 @@
 
 	type Props = {
 		accessToken: AccessToken
+		colors: string[]
 		queue: Queue<Track>
 		pageTitle: string | null
 	}
-	let { accessToken, queue, pageTitle = $bindable() }: Props = $props()
+	let { accessToken, colors = $bindable(), queue, pageTitle = $bindable() }: Props = $props()
 
 	let deviceId: string | null = $state(null)
 	let player: Spotify.Player
 	let track: Track | null = null
 
-	let colors: [string, string] = $state(['#2A2A2A', '#4A4A4A'])
 	let paused = $state(true)
 	let position = $state(0)
 	let displayTrack: Spotify.Track | Track | null = $state(null)
@@ -89,8 +90,10 @@
 
 	async function setColors() {
 		if (!track?.album.images[0].url) return
-		const output = await prominent(track?.album.images[0].url, { amount: 2, format: 'hex' })
-		colors = output as [string, string]
+		const from = await average(track?.album.images[0].url, { format: 'hex' })
+		const to = tinycolor(from as string)
+		to.isDark() ? to.lighten(40) : to.darken(40)
+		colors = [from as string, to.toString()]
 	}
 
 	async function setFirstTrack() {
@@ -136,77 +139,81 @@
 	}
 </script>
 
-<div class="mx-auto max-w-md rounded-lg bg-gray-800 p-6 text-white">
-	{#if !deviceId}
+<div class="flex-1 flex flex-col justify-center">
+	{#if !deviceId || !displayTrack}
 		<div class="py-4 text-center">Connecting...</div>
 	{:else}
-		<div class="space-y-4">
-			<div class="relative aspect-square overflow-hidden rounded-lg">
-				{colors}
-				{#if displayTrack}
-					<img
-						src={displayTrack.album.images[0]?.url}
-						alt={displayTrack.name}
-						class="h-full w-full object-cover"
+		<!-- Artwork -->
+		<div
+			class="relative size-[30rem] mx-auto mb-8 rounded-xl overflow-hidden shadow-2xl border-4 border-white/10"
+		>
+			<img
+				src={displayTrack.album.images[0]?.url}
+				alt={displayTrack.name}
+				class="w-full h-full object-cover"
+			/>
+		</div>
+
+		<!-- Track Info -->
+		<div class="text-center mb-8 space-y-1 text-shadow">
+			<h2 class="text-2xl font-medium">{displayTrack.name}</h2>
+			<p class="text-sm opacity-75">{artistName}</p>
+		</div>
+
+		<Progress duration={displayTrack?.duration_ms || 0} {position} onPositionUpdate={seek}
+		></Progress>
+
+		<!-- Controls -->
+		<div class="flex justify-center items-center gap-4 mb-6">
+			<button
+				class="p-3 opacity-75 hover:opacity-100"
+				onpointerdown={previousTrack}
+				aria-label="Previous track"
+			>
+				<svg class="w-6 h-6" viewBox="0 0 24 24" stroke="currentColor" fill="none">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="1.5"
+						d="M15 19l-7-7 7-7"
 					/>
+				</svg>
+			</button>
+			<button
+				class="p-5 bg-white/10 hover:bg-white/20 rounded-full"
+				onpointerdown={togglePlay}
+				aria-label={paused ? 'Play' : 'Pause'}
+			>
+				{#if paused}
+					<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M8 5v14l11-7z" />
+					</svg>
 				{:else}
-					<div class="flex h-full w-full items-center justify-center bg-gray-700">
-						<span class="text-gray-400">No track playing</span>
-					</div>
-				{/if}
-			</div>
-
-			<div class="text-center">
-				{#if displayTrack}
-					<h3 class="truncate text-lg font-bold">
-						{displayTrack.name}
-					</h3>
-					<p class="text-sm text-gray-400">
-						{artistName}
-					</p>
-				{/if}
-			</div>
-
-			<div class="flex items-center justify-center space-x-6">
-				<button
-					onpointerdown={previousTrack}
-					class="p-2 transition-colors hover:text-green-500"
-					aria-label="Previous track"
-				>
-					<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+					<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
 					</svg>
-				</button>
+				{/if}
+			</button>
+			<button
+				class="p-3 opacity-75 hover:opacity-100"
+				onpointerdown={nextTrack}
+				aria-label="Next track"
+			>
+				<svg class="w-6 h-6" viewBox="0 0 24 24" stroke="currentColor" fill="none">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="1.5"
+						d="M9 5l7 7-7 7"
+					/>
+				</svg>
+			</button>
+		</div>
 
-				<button
-					onpointerdown={togglePlay}
-					class="rounded-full bg-green-500 p-3 transition-colors hover:bg-green-400"
-					aria-label={paused ? 'Play' : 'Pause'}
-				>
-					{#if paused}
-						<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
-							<path d="M8 5v14l11-7z" />
-						</svg>
-					{:else}
-						<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
-							<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-						</svg>
-					{/if}
-				</button>
-
-				<button
-					onpointerdown={nextTrack}
-					class="p-2 transition-colors hover:text-green-500"
-					aria-label="Next track"
-				>
-					<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-					</svg>
-				</button>
-			</div>
-
-			<Progress duration={displayTrack?.duration_ms || 0} {position} onPositionUpdate={seek}
-			></Progress>
+		<!-- Source Info -->
+		<div class="text-center text-sm opacity-75">
+			From <span class="font-medium">Hurry Up, We're Dreaming</span>
+			<button class="ml-2 text-xs hover:opacity-100 opacity-75">×</button>
 		</div>
 	{/if}
 </div>
