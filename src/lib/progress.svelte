@@ -51,7 +51,7 @@
 </script>
 
 <!-- Progress -->
-<div class="mb-8 space-y-2 relative">
+<div class="mb-2 space-y-2 relative">
 	<div
 		bind:this={divElement}
 		onpointerdown={onSeekStart}
