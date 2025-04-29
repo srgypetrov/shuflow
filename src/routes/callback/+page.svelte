@@ -3,7 +3,7 @@
 
 	import { goto } from '$app/navigation'
 
-	import { spotify } from '$lib/spotify/auth'
+	import { spotify } from '$lib/spotify'
 
 	onMount(async () => {
 		const response = await spotify.authenticate()

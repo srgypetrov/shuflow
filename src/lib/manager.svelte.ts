@@ -13,8 +13,8 @@ import type { Table } from 'dexie'
 import type { Config, DBAlbum, DBArtist, DBEntity, DBPlaylist, DBTrack } from '$lib/db'
 import { Binary, db } from '$lib/db'
 import { stateQuery } from '$lib/helpers.svelte'
-import { spotify } from '$lib/spotify/auth'
-import { Paginator } from '$lib/spotify/paginator'
+import { Paginator } from '$lib/paginator'
+import { spotify } from '$lib/spotify'
 
 export type PlayerItem = {
 	track: Track

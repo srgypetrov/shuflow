@@ -5,10 +5,10 @@
 	import { fade } from 'svelte/transition'
 	import tinycolor from 'tinycolor2'
 
+	import Progress from '$lib/components/progress.svelte'
 	import type { PlayerItem } from '$lib/manager.svelte'
-	import Progress from '$lib/progress.svelte'
-	import { type Queue } from '$lib/queue'
-	import { spotify } from '$lib/spotify/auth'
+	import type { Queue } from '$lib/queue'
+	import { spotify } from '$lib/spotify'
 
 	type Props = {
 		accessToken: AccessToken
@@ -217,9 +217,7 @@
 				onpointerdown={previousTrack}
 				aria-label="Previous track"
 			>
-				<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-					<path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6 1.41-1.41zM6 6h2v12H6V6z" />
-				</svg>
+				<img class="h-6 w-6" src="/previous.svg" alt="Previous" />
 			</button>
 			<button
 				class="p-5 bg-white/10 hover:bg-white/20 rounded-full"
@@ -227,13 +225,9 @@
 				aria-label={paused ? 'Play' : 'Pause'}
 			>
 				{#if paused}
-					<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M8 5v14l11-7z" />
-					</svg>
+					<img class="h-6 w-6" src="/play.svg" alt="Play" />
 				{:else}
-					<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-					</svg>
+					<img class="h-6 w-6" src="/pause.svg" alt="Pause" />
 				{/if}
 			</button>
 			<button
@@ -241,9 +235,7 @@
 				onpointerdown={nextTrack}
 				aria-label="Next track"
 			>
-				<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-					<path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6-1.41 1.41zM16 6h2v12h-2V6z" />
-				</svg>
+				<img class="h-6 w-6" src="/next.svg" alt="Next" />
 			</button>
 		</div>
 	{/if}

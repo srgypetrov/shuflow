@@ -5,10 +5,10 @@
 
 	import { goto } from '$app/navigation'
 
+	import Player from '$lib/components/player.svelte'
 	import { LibraryManager } from '$lib/manager.svelte'
-	import Player from '$lib/player.svelte'
 	import { Queue } from '$lib/queue'
-	import { spotify } from '$lib/spotify/auth'
+	import { spotify } from '$lib/spotify'
 
 	let accessToken: AccessToken | null = $state(null)
 	let pageTitle: string | null = $state(null)
@@ -97,14 +97,7 @@
 					onpointerdown={requestLogout}
 					aria-label="Logout"
 				>
-					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="1.5"
-							d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-						/>
-					</svg>
+					<img class="h-6 w-6" src="/logout.svg" alt="Logout" />
 				</button>
 			</header>
 

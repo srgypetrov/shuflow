@@ -30,7 +30,7 @@
 					on:click={login}
 					class="focusable relative flex items-center justify-center w-full py-4 px-6 rounded-lg bg-green-500/90 hover:bg-green-400 focus:bg-green-400 active:scale-[0.98] transform transition-all duration-200 font-semibold text-gray-800"
 				>
-					<img class="w-5 h-5 mr-3" src="/spotify.svg" alt="Spotify" />
+					<img class="w-5 h-5 mr-3" src="/logo-spotify.svg" alt="Spotify" />
 					Continue with Spotify
 				</button>
 
