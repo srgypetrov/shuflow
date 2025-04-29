@@ -46,11 +46,13 @@
 		document.body.appendChild(script)
 		window.onSpotifyWebPlaybackSDKReady = init
 		window.addEventListener('keydown', onKeydown)
+		document.addEventListener('visibilitychange', onVisibilityChange)
 	})
 
 	onDestroy(() => {
 		if (player) player.disconnect()
 		window.removeEventListener('keydown', onKeydown)
+		document.removeEventListener('visibilitychange', onVisibilityChange)
 	})
 
 	function onKeydown(event: KeyboardEvent) {
@@ -67,6 +69,14 @@
 		if (event.code === 'Space') {
 			event.preventDefault() // Prevent page scroll
 			togglePlay()
+		}
+	}
+
+	async function onVisibilityChange() {
+		if (document.hidden || !player || !item) return
+		const playback = await player.getCurrentState()
+		if (playback && playback.track_window.current_track.uri === item.track.uri) {
+			position = Math.min(playback.position, item.track.duration_ms)
 		}
 	}
 
