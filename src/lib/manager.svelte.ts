@@ -191,22 +191,22 @@ class LibraryReader {
 		const sources = [
 			{
 				item: this.fromAlbums.bind(this),
-				weight: Math.log((counts.albums ?? 0) + 1),
+				weight: Math.pow((counts.albums ?? 0) + 1, 0.5) * 1.0,
 				isActive: config.isUsingAlbums
 			},
 			{
 				item: this.fromArtists.bind(this),
-				weight: Math.log((counts.artists ?? 0) + 1),
+				weight: Math.pow((counts.artists ?? 0) + 1, 0.5) * 1.2,
 				isActive: config.isUsingArtists
 			},
 			{
 				item: this.fromPlaylists.bind(this),
-				weight: Math.log((counts.playlists ?? 0) + 1),
+				weight: Math.pow((counts.playlists ?? 0) + 1, 0.5) * 1.5,
 				isActive: config.isUsingPlaylists
 			},
 			{
 				item: this.fromTracks.bind(this),
-				weight: Math.log((counts.tracks ?? 0) + 1),
+				weight: Math.pow((counts.tracks ?? 0) + 1, 0.5) * 0.8,
 				isActive: config.isUsingTracks
 			}
 		].filter((source) => source.isActive)
