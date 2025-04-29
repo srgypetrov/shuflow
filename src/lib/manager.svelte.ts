@@ -39,14 +39,18 @@ export class LibraryManager {
 		this.writer = new LibraryWriter()
 	}
 
+	async delete(): Promise<void> {
+		return db.delete()
+	}
+
 	async next(): Promise<PlayerItem | null> {
 		const config = await db.configGetOrCreate()
 		return this.reader.getRandomItem(config, this.counts)
 	}
 
 	async reset(): Promise<void> {
-		const [config] = await Promise.all([db.configGetOrCreate(), this.writer.clear()])
-		await this.writer.sync(config)
+		await this.writer.clear()
+		return this.sync(true)
 	}
 
 	async stop(): Promise<[void, void]> {

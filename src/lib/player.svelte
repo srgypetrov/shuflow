@@ -175,7 +175,7 @@
 		<!-- Artwork -->
 		<button
 			type="button"
-			class="relative group w-full max-w-sm md:max-w-md lg:max-w-lg aspect-square mx-auto mb-8 rounded-xl overflow-hidden shadow-2xl border-4 border-white/10 p-0 bg-transparent cursor-default"
+			class="relative group w-full max-w-sm md:max-w-md lg:max-w-lg aspect-square mx-auto mb-6 rounded-xl overflow-hidden shadow-2xl border-2 border-white/10 p-0 bg-transparent cursor-default"
 		>
 			<img src={track.album.images[0]?.url} alt={track.name} class="w-full h-full object-cover" />
 			<div
@@ -188,7 +188,7 @@
 		</button>
 
 		<!-- Track Info -->
-		<div class="text-center mb-8 space-y-1 text-shadow">
+		<div class="text-center mb-6 space-y-1 text-shadow">
 			<h2 class="text-2xl font-medium">{track.name}</h2>
 			<p class="text-sm opacity-75">{artistName}</p>
 		</div>
