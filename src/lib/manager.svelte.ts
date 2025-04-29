@@ -14,7 +14,10 @@ import type { Config, DBAlbum, DBArtist, DBEntity, DBPlaylist, DBTrack } from '$
 import { Binary, db } from '$lib/db'
 import { stateQuery } from '$lib/helpers.svelte'
 import { Paginator } from '$lib/paginator'
+import { Picker } from '$lib/picker'
 import { spotify } from '$lib/spotify'
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 export type PlayerItem = {
 	track: Track
@@ -66,7 +69,7 @@ export class LibraryManager {
 	private isSyncNeeded(config: Config): boolean {
 		if (!config.librarySyncedAt) return true
 		const diff = new Date().getTime() - config.librarySyncedAt.getTime()
-		return diff > 1000 * 60 * 60 * 24
+		return diff > ONE_DAY_MS
 	}
 }
 
@@ -99,7 +102,10 @@ class LibraryWriter {
 			.then(async () => {
 				await db.configUpdate({ librarySyncedAt: new Date() })
 			})
-			.catch(this.clear)
+			.catch((error) => {
+				console.error('Library sync failed:', error)
+				this.clear()
+			})
 			.finally(() => {
 				this.promise = null
 			})
@@ -189,23 +195,30 @@ class LibraryReader {
 		retries = 0
 	): Promise<PlayerItem | null> {
 		const sources = [
+			// Weights influence the probability of picking from each source.
+			// Using Math.pow(count + 1, 0.5) gives diminishing returns for large counts.
+			// Base weights adjust probabilities.
 			{
 				item: this.fromAlbums.bind(this),
+				// Base likelihood
 				weight: Math.pow((counts.albums ?? 0) + 1, 0.5) * 1.0,
 				isActive: config.isUsingAlbums
 			},
 			{
 				item: this.fromArtists.bind(this),
+				// Slightly higher likelihood than albums because artists can have multiple albums.
 				weight: Math.pow((counts.artists ?? 0) + 1, 0.5) * 1.2,
 				isActive: config.isUsingArtists
 			},
 			{
 				item: this.fromPlaylists.bind(this),
+				// Higher likelihood because playlists usually have many tracks.
 				weight: Math.pow((counts.playlists ?? 0) + 1, 0.5) * 1.5,
 				isActive: config.isUsingPlaylists
 			},
 			{
 				item: this.fromTracks.bind(this),
+				// Slightly lower likelihood because track is a basic entity.
 				weight: Math.pow((counts.tracks ?? 0) + 1, 0.5) * 0.8,
 				isActive: config.isUsingTracks
 			}
@@ -292,26 +305,5 @@ class LibraryReader {
 		const track = await this.getRandomRecord(db.tracks)
 		if (!track) return null
 		return { track: await spotify.tracks.get(track.spotifyId) }
-	}
-}
-
-class Picker {
-	static random<T>(items: T[]): T {
-		return items[this.randomNumber(items.length)]
-	}
-
-	static randomNumber(max: number) {
-		return Math.floor(Math.random() * max)
-	}
-
-	static randomWeighted<T>(items: { item: T; weight: number }[]): T {
-		const random = Math.random() * items.reduce((sum, { weight }) => sum + weight, 0)
-
-		let cumulative = 0
-		for (const { item, weight } of items) {
-			cumulative += weight
-			if (random <= cumulative) return item
-		}
-		throw new Error('Picker error: failed to correctly determine a weighted item')
 	}
 }

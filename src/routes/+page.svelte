@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { AccessToken } from '@spotify/web-api-ts-sdk'
 	import { onMount, tick } from 'svelte'
-	import { fade } from 'svelte/transition'
 
 	import { goto } from '$app/navigation'
 
+	import LogoutConfirmationModal from '$lib/components/confirmation.svelte'
 	import Player from '$lib/components/player.svelte'
 	import { LibraryManager } from '$lib/manager.svelte'
 	import { Queue } from '$lib/queue'
@@ -54,14 +54,6 @@
 		spotify.logOut()
 		goto('/login')
 	}
-
-	function requestLogout() {
-		showLogoutConfirmation = true
-	}
-
-	function cancelLogout() {
-		showLogoutConfirmation = false
-	}
 </script>
 
 <svelte:head>
@@ -94,7 +86,7 @@
 				</div>
 				<button
 					class="font-light tracking-wider text-lg opacity-100 hover:opacity-100 flex items-center gap-1.5 p-1.5 rounded-md hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-					onpointerdown={requestLogout}
+					onpointerdown={() => (showLogoutConfirmation = true)}
 					aria-label="Logout"
 				>
 					<img class="h-6 w-6" src="/logout.svg" alt="Logout" />
@@ -103,7 +95,7 @@
 
 			<Player {accessToken} {queue} bind:pageTitle bind:colors={colorsCurrent} />
 
-			<div class="text-center text-xs opacity-85 py-1 select-none !mt-0">
+			<div class="text-center text-xs opacity-85 py-1 !mt-0">
 				{manager.counts.tracks}
 				{manager.counts.tracks === 1 ? 'track' : 'tracks'} • {manager.counts.albums}
 				{manager.counts.albums === 1 ? 'album' : 'albums'} • {manager.counts.playlists}
@@ -113,37 +105,5 @@
 		</div>
 	</div>
 
-	{#if showLogoutConfirmation}
-		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-			transition:fade={{ duration: 150 }}
-		>
-			<div
-				class="bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-lg shadow-xl p-6 w-full max-w-md mx-4 shadow-white/10"
-			>
-				<h2 class="text-xl font-semibold mb-4 text-white">Logout</h2>
-				<p class="text-gray-300 mb-6">
-					Are you sure you want to log out? This will clear all downloaded metadata and reset your
-					settings.
-				</p>
-				<div class="flex justify-end space-x-3">
-					<button
-						onclick={cancelLogout}
-						class="px-4 py-2 rounded-lg text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-					>
-						Cancel
-					</button>
-					<button
-						onclick={() => {
-							logout()
-							cancelLogout()
-						}}
-						class="px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
-					>
-						Confirm
-					</button>
-				</div>
-			</div>
-		</div>
-	{/if}
+	<LogoutConfirmationModal bind:isOpen={showLogoutConfirmation} action={logout} />
 {/if}
