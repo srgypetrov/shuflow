@@ -2,6 +2,7 @@
 	import type { AccessToken, Track } from '@spotify/web-api-ts-sdk'
 	import { average } from 'color.js'
 	import { onDestroy, onMount } from 'svelte'
+	import { fade } from 'svelte/transition'
 	import tinycolor from 'tinycolor2'
 
 	import type { PlayerItem } from '$lib/manager.svelte'
@@ -189,8 +190,12 @@
 
 		<!-- Track Info -->
 		<div class="text-center mb-6 space-y-1 text-shadow">
-			<h2 class="text-2xl font-medium">{track.name}</h2>
-			<p class="text-sm opacity-75">{artistName}</p>
+			{#key track.uri}
+				<div in:fade>
+					<h2 class="text-2xl font-medium">{track.name}</h2>
+					<p class="text-sm opacity-85">{artistName}</p>
+				</div>
+			{/key}
 		</div>
 
 		<Progress duration={track?.duration_ms || 0} {position} onPositionUpdate={seek}></Progress>
