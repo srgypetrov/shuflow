@@ -191,22 +191,22 @@ class LibraryReader {
 		const sources = [
 			{
 				item: this.fromAlbums.bind(this),
-				weight: counts.albums ?? 0,
+				weight: Math.log((counts.albums ?? 0) + 1),
 				isActive: config.isUsingAlbums
 			},
 			{
 				item: this.fromArtists.bind(this),
-				weight: counts.artists ?? 0,
+				weight: Math.log((counts.artists ?? 0) + 1),
 				isActive: config.isUsingArtists
 			},
 			{
 				item: this.fromPlaylists.bind(this),
-				weight: counts.playlists ?? 0,
+				weight: Math.log((counts.playlists ?? 0) + 1),
 				isActive: config.isUsingPlaylists
 			},
 			{
 				item: this.fromTracks.bind(this),
-				weight: counts.tracks ?? 0 * 0.5,
+				weight: Math.log((counts.tracks ?? 0) + 1),
 				isActive: config.isUsingTracks
 			}
 		].filter((source) => source.isActive)
@@ -225,10 +225,13 @@ class LibraryReader {
 	}
 
 	private async getRandomRecord<T extends DBEntity>(table: Table): Promise<T | null> {
-		const first = await table.orderBy('id').first()
-		const last = await table.orderBy('id').last()
-		if (!first || !last) return null
-		return table.get(Picker.randomId(first.id, last.id))
+		const count = await table.where('isActive').equals(Binary.ON).count()
+		return table
+			.where('isActive')
+			.equals(Binary.ON)
+			.offset(Picker.randomNumber(count))
+			.limit(1)
+			.first()
 	}
 
 	private async fromAlbums(artist?: DBArtist): Promise<PlayerItem | null> {
@@ -247,7 +250,7 @@ class LibraryReader {
 			tracks = (await spotify.albums.tracks(album.id)).items
 		} else {
 			const record = await this.getRandomRecord(db.albums)
-			if (!record || record.isActive === Binary.OFF) return null
+			if (!record) return null
 			const { tracks: tracksPage, ...fullAlbum } = await spotify.albums.get(record.spotifyId)
 			album = { ...fullAlbum, album_group: '' }
 			tracks = tracksPage.items
@@ -266,13 +269,13 @@ class LibraryReader {
 
 	private async fromArtists(): Promise<PlayerItem | null> {
 		const artist = await this.getRandomRecord(db.artists)
-		if (!artist || artist.isActive === Binary.OFF) return null
+		if (!artist) return null
 		return this.fromAlbums(artist)
 	}
 
 	private async fromPlaylists(): Promise<PlayerItem | null> {
 		const playlist = await this.getRandomRecord(db.playlists)
-		if (!playlist || playlist.isActive === Binary.OFF) return null
+		if (!playlist) return null
 
 		const items = await Array.fromAsync(
 			new Paginator<PlaylistedTrack>(({ limit, offset }) =>
@@ -287,22 +290,18 @@ class LibraryReader {
 
 	private async fromTracks(): Promise<PlayerItem | null> {
 		const track = await this.getRandomRecord(db.tracks)
-		if (!track || track.isActive === Binary.OFF) return null
+		if (!track) return null
 		return { track: await spotify.tracks.get(track.spotifyId) }
 	}
 }
 
 class Picker {
-	static randomId(first: number, last: number) {
-		return Picker.randomValue(last - first + 1) + first
-	}
-
-	static randomValue(max: number) {
-		return Math.floor(Math.random() * max)
-	}
-
 	static random<T>(items: T[]): T {
-		return items[this.randomValue(items.length)]
+		return items[this.randomNumber(items.length)]
+	}
+
+	static randomNumber(max: number) {
+		return Math.floor(Math.random() * max)
 	}
 
 	static randomWeighted<T>(items: { item: T; weight: number }[]): T {
