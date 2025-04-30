@@ -50,7 +50,6 @@
 	}
 </script>
 
-<!-- Progress -->
 <div class="mb-2 space-y-2 relative">
 	<div
 		bind:this={divElement}

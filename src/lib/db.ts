@@ -46,13 +46,20 @@ class ConfigTable extends Entity<DB> {
 	librarySyncedAt!: Date
 }
 
+export type Config = InsertType<ConfigTable, 'id'>
+export type DBAlbum = InsertType<AlbumTable, 'id'>
+export type DBArtist = InsertType<ArtistTable, 'id'>
+export type DBPlaylist = InsertType<PlaylistTable, 'id'>
+export type DBTrack = InsertType<TrackTable, 'id'>
+export type DBEntity = DBAlbum | DBArtist | DBPlaylist | DBTrack
+
 class DB extends Dexie {
 	albums!: EntityTable<AlbumTable, 'id'>
 	artists!: EntityTable<ArtistTable, 'id'>
 	playlists!: EntityTable<PlaylistTable, 'id'>
 	tracks!: EntityTable<TrackTable, 'id'>
 
-	protected config!: EntityTable<Config, 'id'>
+	protected config!: EntityTable<ConfigTable, 'id'>
 
 	constructor() {
 		super('ShuflowLibrary')
@@ -72,7 +79,7 @@ class DB extends Dexie {
 
 	async configGetOrCreate(): Promise<Config> {
 		return db.transaction('rw', this.config, async () => {
-			let config = await this.config.get(VERSION)
+			let config: Config | undefined = await this.config.get(VERSION)
 			if (!config) {
 				config = {
 					id: VERSION,
@@ -88,15 +95,9 @@ class DB extends Dexie {
 		})
 	}
 
-	async configUpdate(config: UpdateSpec<InsertType<Config, 'id'>>) {
+	async configUpdate(config: UpdateSpec<Config>) {
 		await this.config.update(VERSION, config)
 	}
 }
 
 export const db = new DB()
-export type Config = InsertType<ConfigTable, 'id'>
-export type DBAlbum = InsertType<AlbumTable, 'id'>
-export type DBArtist = InsertType<ArtistTable, 'id'>
-export type DBPlaylist = InsertType<PlaylistTable, 'id'>
-export type DBTrack = InsertType<TrackTable, 'id'>
-export type DBEntity = DBAlbum | DBArtist | DBPlaylist | DBTrack
