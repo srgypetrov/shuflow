@@ -5,7 +5,7 @@
 		onPositionUpdate: (position: number) => void
 	}
 
-	let { duration, position, onPositionUpdate = (_: number) => {} }: Props = $props()
+	let { duration, position, onPositionUpdate = () => {} }: Props = $props()
 	let positionCurrent = $state(position)
 	let isSeeking = $state(false)
 	let isWaitingForNewPosition = $state(false)
