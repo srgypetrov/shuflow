@@ -18,3 +18,12 @@ export function stateQuery<T>(
 
 	return queryState
 }
+
+export function debounce(callback: (...args: unknown[]) => unknown, wait = 500) {
+	let timeout: ReturnType<typeof setTimeout>
+
+	return (...args: unknown[]) => {
+		clearTimeout(timeout)
+		timeout = setTimeout(() => callback(...args), wait)
+	}
+}

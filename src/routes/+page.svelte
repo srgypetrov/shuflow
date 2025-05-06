@@ -40,7 +40,7 @@
 				colorsPrevious = [...colorsCurrent]
 				isColorsChanged = false
 				await tick()
-			}, 1500)
+			}, 500)
 
 			return () => {
 				clearTimeout(timer)
@@ -69,7 +69,7 @@
 		></div>
 		<!-- Background Layer (New Colors - Fades In) -->
 		<div
-			class="absolute inset-0 -z-10 transition-opacity duration-[1500ms] ease-in-out"
+			class="absolute inset-0 -z-10 transition-opacity duration-[500ms] ease-in-out"
 			class:opacity-100={isColorsChanged}
 			class:opacity-0={!isColorsChanged}
 			style="background-image: linear-gradient(to bottom right, {colorsCurrent.join(', ')});"
