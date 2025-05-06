@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { AccessToken, Track } from '@spotify/web-api-ts-sdk'
+	import type { Track } from '@spotify/web-api-ts-sdk'
 	import { average } from 'color.js'
 	import { onDestroy, onMount } from 'svelte'
 	import { fade } from 'svelte/transition'
@@ -11,12 +11,11 @@
 	import { spotify } from '$lib/spotify'
 
 	type Props = {
-		accessToken: AccessToken
 		colors: string[]
 		queue: Queue<PlayerItem>
 		pageTitle: string | null
 	}
-	let { accessToken, colors = $bindable(), queue, pageTitle = $bindable() }: Props = $props()
+	let { colors = $bindable(), queue, pageTitle = $bindable() }: Props = $props()
 
 	let deviceId: string | null = $state(null)
 	let player: Spotify.Player
@@ -85,7 +84,10 @@
 			enableMediaSession: true,
 			name: 'Shuflow',
 			getOAuthToken: (cb) => {
-				cb(accessToken.access_token)
+				spotify.authenticate().then((response) => {
+					if (!response.authenticated) return
+					cb(response.accessToken.access_token)
+				})
 			},
 			volume: 1
 		})

@@ -77,22 +77,21 @@ class DB extends Dexie {
 		this.tracks.mapToClass(TrackTable)
 	}
 
-	async configGetOrCreate(): Promise<Config> {
-		return db.transaction('rw', this.config, async () => {
-			let config: Config | undefined = await this.config.get(VERSION)
-			if (!config) {
-				config = {
-					id: VERSION,
-					isUsingAlbums: true,
-					isUsingArtists: true,
-					isUsingPlaylists: true,
-					isUsingTracks: true,
-					libraryCreatedAt: new Date()
-				} as Config
-				await this.config.add(config)
-			}
-			return config
-		})
+	async configCreate(): Promise<Config> {
+		const config = {
+			id: VERSION,
+			isUsingAlbums: true,
+			isUsingArtists: true,
+			isUsingPlaylists: true,
+			isUsingTracks: true,
+			libraryCreatedAt: new Date()
+		} as Config
+		await this.config.add(config)
+		return config
+	}
+
+	async configGet() {
+		return await this.config.get(VERSION)
 	}
 
 	async configUpdate(config: UpdateSpec<Config>) {

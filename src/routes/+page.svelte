@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { AccessToken } from '@spotify/web-api-ts-sdk'
 	import { onMount, tick } from 'svelte'
 
 	import { goto } from '$app/navigation'
@@ -10,24 +9,26 @@
 	import { Queue } from '$lib/queue'
 	import { spotify } from '$lib/spotify'
 
-	let accessToken: AccessToken | null = $state(null)
+	const INITIAL_COLORS = ['#22304E', '#3E526E', '#000000']
+
 	let pageTitle: string | null = $state(null)
 
-	let colorsCurrent = $state(['#22304E', '#3E526E', '#000000'])
-	let colorsPrevious = $state(['#22304E', '#3E526E', '#000000'])
+	let colorsCurrent = $state(INITIAL_COLORS)
+	let colorsPrevious = $state(INITIAL_COLORS)
 	let isColorsChanged = $state(false)
 
+	let authenticated = $state(false)
 	let showLogoutConfirmation = $state(false)
 
 	let manager = new LibraryManager()
 	let queue = new Queue(manager)
 
 	onMount(async () => {
-		accessToken = await spotify.getAccessToken()
-		if (!accessToken) {
+		if (!(await manager.exists())) {
 			goto('/login')
 			return
 		}
+		authenticated = (await spotify.authenticate()).authenticated
 		manager.sync()
 	})
 
@@ -50,7 +51,6 @@
 	async function logout() {
 		await Promise.all([queue.stop(), manager.stop()])
 		await manager.delete()
-		accessToken = null
 		spotify.logOut()
 		goto('/login')
 	}
@@ -60,7 +60,7 @@
 	<title>{pageTitle ?? 'Shuflow • Shuffle Your Favorite Music'}</title>
 </svelte:head>
 
-{#if accessToken}
+{#if authenticated}
 	<div class="relative h-full min-h-screen text-gray-100 font-sans antialiased">
 		<!-- Background Layer (Old Colors) -->
 		<div
@@ -93,7 +93,7 @@
 				</button>
 			</header>
 
-			<Player {accessToken} {queue} bind:pageTitle bind:colors={colorsCurrent} />
+			<Player {queue} bind:pageTitle bind:colors={colorsCurrent} />
 
 			<div class="text-center text-xs opacity-85 py-1 !mt-0">
 				{manager.counts.tracks}

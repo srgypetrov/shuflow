@@ -42,12 +42,22 @@ export class LibraryManager {
 		this.writer = new LibraryWriter()
 	}
 
+	async create(): Promise<void> {
+		if (await this.exists()) return
+		await db.configCreate()
+	}
+
 	async delete(): Promise<void> {
 		return db.delete()
 	}
 
+	async exists(): Promise<boolean> {
+		return (await db.configGet()) !== undefined
+	}
+
 	async next(): Promise<PlayerItem | null> {
-		const config = await db.configGetOrCreate()
+		const config = await db.configGet()
+		if (!config) return null
 		return this.reader.getRandomItem(config, this.counts)
 	}
 
@@ -61,8 +71,8 @@ export class LibraryManager {
 	}
 
 	async sync(force = false): Promise<void> {
-		const config = await db.configGetOrCreate()
-		if (!force && !this.isSyncNeeded(config)) return
+		const config = await db.configGet()
+		if (!config || (!force && !this.isSyncNeeded(config))) return
 		return this.writer.sync(config)
 	}
 
