@@ -19,11 +19,12 @@ export function stateQuery<T>(
 	return queryState
 }
 
-export function debounce(callback: (...args: unknown[]) => unknown, wait = 500) {
-	let timeout: ReturnType<typeof setTimeout>
-
+export function throttle(callback: (...args: unknown[]) => unknown, delay = 500) {
+	let throttled = false
 	return (...args: unknown[]) => {
-		clearTimeout(timeout)
-		timeout = setTimeout(() => callback(...args), wait)
+		if (throttled) return
+		throttled = true
+		callback(...args)
+		setTimeout(() => (throttled = false), delay)
 	}
 }

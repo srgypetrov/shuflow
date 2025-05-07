@@ -6,7 +6,7 @@
 	import tinycolor from 'tinycolor2'
 
 	import Progress from '$lib/components/progress.svelte'
-	import { debounce } from '$lib/helpers.svelte'
+	import { throttle } from '$lib/helpers.svelte'
 	import type { PlayerItem } from '$lib/manager.svelte'
 	import type { Queue } from '$lib/queue'
 	import { spotify } from '$lib/spotify'
@@ -217,7 +217,7 @@
 		<div class="flex justify-center items-center gap-4 mb-6">
 			<button
 				class="p-3 opacity-90 hover:opacity-100 hover:bg-white/10 rounded-full"
-				onpointerdown={debounce(previousTrack)}
+				onpointerdown={throttle(previousTrack)}
 				aria-label="Previous track"
 			>
 				<img class="h-6 w-6" src="/previous.svg" alt="Previous" />
@@ -235,7 +235,7 @@
 			</button>
 			<button
 				class="p-3 opacity-90 hover:opacity-100 hover:bg-white/10 rounded-full"
-				onpointerdown={debounce(nextTrack)}
+				onpointerdown={throttle(nextTrack)}
 				aria-label="Next track"
 			>
 				<img class="h-6 w-6" src="/next.svg" alt="Next" />
