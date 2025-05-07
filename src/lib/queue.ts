@@ -7,7 +7,7 @@ export class Queue<T> {
 
 	constructor(
 		private manager: { next(): Promise<T | null> },
-		private size = 20
+		private size = 5
 	) {}
 
 	private schedule(): void {

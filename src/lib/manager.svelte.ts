@@ -197,7 +197,10 @@ class LibraryWriter {
 class LibraryReader {
 	private promise: Promise<PlayerItem | null> | null = null
 	private stopped = false
-	constructor(private readonly maxRetries = 20) {}
+	constructor(
+		private readonly maxRetries = 20,
+		private readonly weightSmoothingExponent = 0.7
+	) {}
 
 	async getRandomItem(
 		config: Config,
@@ -206,30 +209,30 @@ class LibraryReader {
 	): Promise<PlayerItem | null> {
 		const sources = [
 			// Weights influence the probability of picking from each source.
-			// Using Math.pow(count + 1, 0.5) gives diminishing returns for large counts.
+			// Using Math.pow(count + 1, exponent) gives diminishing returns for large counts.
 			// Base weights adjust probabilities.
 			{
 				item: this.fromAlbums.bind(this),
 				// Base likelihood
-				weight: Math.pow((counts.albums ?? 0) + 1, 0.5) * 1.0,
+				weight: Math.pow((counts.albums ?? 0) + 1, this.weightSmoothingExponent) * 1.0,
 				isActive: config.isUsingAlbums
 			},
 			{
 				item: this.fromArtists.bind(this),
 				// Slightly higher likelihood than albums because artists can have multiple albums.
-				weight: Math.pow((counts.artists ?? 0) + 1, 0.5) * 1.2,
+				weight: Math.pow((counts.artists ?? 0) + 1, this.weightSmoothingExponent) * 1.2,
 				isActive: config.isUsingArtists
 			},
 			{
 				item: this.fromPlaylists.bind(this),
 				// Higher likelihood because playlists usually have many tracks.
-				weight: Math.pow((counts.playlists ?? 0) + 1, 0.5) * 1.5,
+				weight: Math.pow((counts.playlists ?? 0) + 1, this.weightSmoothingExponent) * 1.5,
 				isActive: config.isUsingPlaylists
 			},
 			{
 				item: this.fromTracks.bind(this),
 				// Slightly lower likelihood because track is a basic entity.
-				weight: Math.pow((counts.tracks ?? 0) + 1, 0.5) * 0.8,
+				weight: Math.pow((counts.tracks ?? 0) + 1, this.weightSmoothingExponent) * 0.8,
 				isActive: config.isUsingTracks
 			}
 		].filter((source) => source.isActive)
