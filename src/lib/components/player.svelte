@@ -25,6 +25,7 @@
 	let paused = $state(true)
 	let position = $state(0)
 	let track: Spotify.Track | Track | null = $state(null)
+	let nextTrackTimeout: NodeJS.Timeout | null = null
 
 	let artistName = $derived.by(() => {
 		if (!track) return null
@@ -97,7 +98,10 @@
 		player.addListener('player_state_changed', (playback: Spotify.PlaybackState) => {
 			if (!playback) return
 			paused = playback.paused
-			track = playback.track_window.current_track
+			if (track !== playback.track_window.current_track) {
+				track = playback.track_window.current_track
+				setColors()
+			}
 		})
 		player.connect()
 	}
@@ -105,15 +109,25 @@
 	$effect(() => {
 		const interval = setInterval(async () => {
 			const playback = await player.getCurrentState()
-			if (!playback) return
+			if (!playback || !item || paused) return
 
+			// Update position for progress bar.
+			// Sometimes playback.position contains random values, especially when changing tracks.
+			// To avoid position jumping, a delta check is performed.
+			// The position refresh rate is chosen approximately, but it should be less than a second
+			// to avoid missing some seconds in the position in the UI. The delta is also approximate
+			// and should be greater than a second.
 			const delta = playback.position - position
-			if (!paused && item && delta > 0 && Math.abs(delta) < 1000) {
+			if (delta > 0 && delta < 1000) {
 				position = Math.min(playback.position, item.track.duration_ms)
+			} else {
+				position += 500
 			}
 
-			if (item && item.track.duration_ms - playback.position < 500) {
-				await nextTrack()
+			const remaining = item ? item.track.duration_ms - position : null
+			if (remaining !== null && remaining < 2000 && !nextTrackTimeout) {
+				// Subtract 500ms to avoid track pausing at the end
+				nextTrackTimeout = setTimeout(async () => nextTrack(), Math.max(remaining - 500, 0))
 			}
 		}, 500)
 		return () => {
@@ -130,8 +144,8 @@
 	})
 
 	async function setColors() {
-		if (!item?.track.album?.images[0].url) return
-		const from = await average(item.track.album.images[0].url, { format: 'hex' })
+		if (!track?.album?.images[0].url) return
+		const from = await average(track.album.images[0].url, { format: 'hex' })
 		const color = tinycolor(from as string)
 		const to = color.isDark() ? color.lighten(40) : color.darken(40)
 		colors = [from as string, to.toString()]
@@ -153,7 +167,6 @@
 
 	async function play() {
 		if (!deviceId || !item) return
-		setColors()
 		position = 0
 		await spotify.player.startResumePlayback(deviceId, undefined, [item.track.uri])
 	}
@@ -165,6 +178,10 @@
 	}
 
 	async function nextTrack() {
+		if (nextTrackTimeout) {
+			clearTimeout(nextTrackTimeout)
+			nextTrackTimeout = null
+		}
 		if (!deviceId) return
 		item = await queue.next()
 		await play()
