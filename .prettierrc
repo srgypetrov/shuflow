@@ -12,8 +12,8 @@
 	],
 	"plugins": [
 		"prettier-plugin-svelte",
-		"prettier-plugin-tailwindcss",
-		"@trivago/prettier-plugin-sort-imports"
+		"prettier-plugin-organize-imports",
+		"prettier-plugin-tailwindcss"
 	],
 	"printWidth": 100,
 	"singleQuote": true,

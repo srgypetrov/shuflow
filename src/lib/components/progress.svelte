@@ -50,7 +50,7 @@
 	}
 </script>
 
-<div class="mb-2 space-y-2 relative">
+<div class="relative mb-2 space-y-2">
 	<div
 		bind:this={divElement}
 		onpointerdown={onSeekStart}
@@ -61,13 +61,13 @@
 		aria-valuemin={0}
 		aria-valuemax={duration}
 		aria-valuenow={positionCurrent}
-		class="relative cursor-pointer py-2 group"
+		class="group relative cursor-pointer py-2"
 	>
 		<div
-			class="absolute inset-x-0 top-1/2 h-1 bg-white/10 rounded-full transform -translate-y-1/2"
+			class="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 transform rounded-full bg-white/10"
 		></div>
 		<div
-			class="absolute left-0 top-1/2 h-1 bg-white transition-all duration-100 rounded-full transform -translate-y-1/2 group-hover:bg-white/70"
+			class="absolute left-0 top-1/2 h-1 -translate-y-1/2 transform rounded-full bg-white transition-all duration-100 group-hover:bg-white/70"
 			style:width={`${(positionCurrent / duration) * 100 || 0}%`}
 		></div>
 	</div>

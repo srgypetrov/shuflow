@@ -61,7 +61,7 @@
 </svelte:head>
 
 {#if authenticated}
-	<div class="relative h-full min-h-screen text-gray-100 font-sans antialiased">
+	<div class="relative h-full min-h-screen font-sans text-gray-100 antialiased">
 		<!-- Background Layer (Old Colors) -->
 		<div
 			class="absolute inset-0 -z-10"
@@ -75,17 +75,17 @@
 			style="background-image: linear-gradient(to bottom right, {colorsCurrent.join(', ')});"
 		></div>
 		<!-- Overlay to keep text and controls readable -->
-		<div class="absolute inset-0 -z-10 bg-black/50 pointer-events-none"></div>
+		<div class="pointer-events-none absolute inset-0 -z-10 bg-black/50"></div>
 
 		<!-- Foreground Content -->
-		<div class="relative z-0 max-w-2xl mx-auto p-4 min-h-screen flex flex-col space-y-6">
-			<header class="flex justify-between items-center">
+		<div class="relative z-0 mx-auto flex min-h-screen max-w-2xl flex-col space-y-6 p-4">
+			<header class="flex items-center justify-between">
 				<div class="flex items-center gap-2">
-					<img class="w-8 h-8 opacity-90" src="/logo-gray.svg" alt="Logo" />
+					<img class="h-8 w-8 opacity-90" src="/logo-gray.svg" alt="Logo" />
 					<h1 class="text-xl font-light tracking-wider opacity-100">SHUFLOW</h1>
 				</div>
 				<button
-					class="font-light tracking-wider text-lg opacity-100 hover:opacity-100 flex items-center gap-1.5 p-1.5 rounded-md hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+					class="flex items-center gap-1.5 rounded-md p-1.5 text-lg font-light tracking-wider opacity-100 transition-all hover:bg-white/10 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/20"
 					onpointerdown={() => (showLogoutConfirmation = true)}
 					aria-label="Logout"
 				>
@@ -102,7 +102,7 @@
 
 			<Player {queue} bind:pageTitle bind:colors={colorsCurrent} />
 
-			<div class="text-center text-xs opacity-85 py-1 !mt-0">
+			<div class="!mt-0 py-1 text-center text-xs opacity-85">
 				{manager.counts.tracks}
 				{manager.counts.tracks === 1 ? 'track' : 'tracks'} • {manager.counts.albums}
 				{manager.counts.albums === 1 ? 'album' : 'albums'} • {manager.counts.playlists}

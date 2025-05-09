@@ -207,18 +207,18 @@
 	}
 </script>
 
-<div class="flex-1 flex flex-col justify-center">
+<div class="flex flex-1 flex-col justify-center">
 	{#if !deviceId || !track}
 		<div class="py-4 text-center">Connecting...</div>
 	{:else}
 		<!-- Artwork -->
 		<button
 			type="button"
-			class="relative group w-full max-w-sm md:max-w-md lg:max-w-lg aspect-square mx-auto mb-6 rounded-xl overflow-hidden shadow-2xl border-2 border-white/10 p-0 bg-transparent cursor-default"
+			class="group relative mx-auto mb-6 aspect-square w-full max-w-sm cursor-default overflow-hidden rounded-xl border-2 border-white/10 bg-transparent p-0 shadow-2xl md:max-w-md lg:max-w-lg"
 		>
-			<img src={track.album.images[0]?.url} alt={track.name} class="w-full h-full object-cover" />
+			<img src={track.album.images[0]?.url} alt={track.name} class="h-full w-full object-cover" />
 			<div
-				class="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-xs text-white px-2 py-1 rounded opacity-0 transition-opacity sm:group-hover:opacity-100 group-focus:opacity-100 pointer-events-none max-w-full truncate"
+				class="pointer-events-none absolute left-1/2 top-2 max-w-full -translate-x-1/2 transform truncate rounded bg-black bg-opacity-60 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-focus:opacity-100 sm:group-hover:opacity-100"
 			>
 				You liked this {source.type}{#if source.name}:
 					<span class="font-bold">{source.name}</span>
@@ -227,7 +227,7 @@
 		</button>
 
 		<!-- Track Info -->
-		<div class="text-center mb-6 space-y-1 text-shadow">
+		<div class="text-shadow mb-6 space-y-1 text-center">
 			{#key track.uri}
 				<div in:fade>
 					<h2 class="text-2xl font-medium">{track.name}</h2>
@@ -239,9 +239,9 @@
 		<Progress duration={track?.duration_ms || 0} {position} onPositionUpdate={seek}></Progress>
 
 		<!-- Controls -->
-		<div class="flex justify-center items-center gap-4 mb-6">
+		<div class="mb-6 flex items-center justify-center gap-4">
 			<button
-				class="p-3 opacity-90 hover:opacity-100 hover:bg-white/10 rounded-full"
+				class="rounded-full p-3 opacity-90 hover:bg-white/10 hover:opacity-100"
 				onpointerdown={throttle(previousTrack)}
 				aria-label="Previous track"
 			>
@@ -250,7 +250,7 @@
 				</svg>
 			</button>
 			<button
-				class="p-5 bg-white/10 hover:bg-white/20 rounded-full"
+				class="rounded-full bg-white/10 p-5 hover:bg-white/20"
 				onpointerdown={togglePlay}
 				aria-label={paused ? 'Play' : 'Pause'}
 			>
@@ -265,7 +265,7 @@
 				{/if}
 			</button>
 			<button
-				class="p-3 opacity-90 hover:opacity-100 hover:bg-white/10 rounded-full"
+				class="rounded-full p-3 opacity-90 hover:bg-white/10 hover:opacity-100"
 				onpointerdown={throttle(nextTrack)}
 				aria-label="Next track"
 			>
