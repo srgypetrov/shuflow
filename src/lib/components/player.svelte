@@ -245,7 +245,7 @@
 				onpointerdown={throttle(previousTrack)}
 				aria-label="Previous track"
 			>
-				<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+				<svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
 					<path d="M18.41 16.59 13.82 12l4.59-4.59L17 6l-6 6 6 6 1.41-1.41zM6 6h2v12H6V6z" />
 				</svg>
 			</button>
@@ -255,11 +255,11 @@
 				aria-label={paused ? 'Play' : 'Pause'}
 			>
 				{#if paused}
-					<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+					<svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M8 5v14l11-7z" />
 					</svg>
 				{:else}
-					<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+					<svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
 						<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
 					</svg>
 				{/if}
@@ -269,7 +269,7 @@
 				onpointerdown={throttle(nextTrack)}
 				aria-label="Next track"
 			>
-				<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+				<svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
 					<path d="M5.59 7.41 10.18 12l-4.59 4.59L7 18l6-6-6-6-1.41 1.41zM16 6h2v12h-2V6z" />
 				</svg>
 			</button>

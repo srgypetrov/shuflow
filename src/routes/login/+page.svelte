@@ -16,7 +16,11 @@
 	<div class="flex min-h-screen items-center justify-center p-4 sm:p-6 md:p-12">
 		<div class="w-full max-w-md space-y-6 rounded-xl p-6 sm:p-8 md:p-10">
 			<div class="space-y-5 text-center">
-				<img class="mx-auto" src="/logo.svg" alt="Logo" />
+				<svg class="mx-auto size-24" viewBox="26 13 68 94">
+					<rect width="16" height="60" x="28" y="30" fill="#22C55E" rx="3" />
+					<rect width="16" height="90" x="52" y="15" fill="#8B5CF6" rx="3" />
+					<rect width="16" height="30" x="76" y="45" fill="#22C55E" rx="3" />
+				</svg>
 				<h1 class="text-3xl font-light text-gray-100">SHUFLOW</h1>
 				<p class="text-sm leading-relaxed text-gray-300/90">
 					Continuous music flow from your Spotify favorites
@@ -28,7 +32,7 @@
 					on:click={login}
 					class="focusable relative flex w-full transform items-center justify-center rounded-lg bg-green-500/90 px-6 py-4 font-semibold text-gray-800 transition-all duration-200 hover:bg-green-400 focus:bg-green-400 active:scale-[0.98]"
 				>
-					<svg class="mr-3 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+					<svg class="mr-3 size-5" fill="currentColor" viewBox="0 0 24 24">
 						<path
 							d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.52 17.34c-.24.36-.66.48-1.02.24-2.76-1.68-6.24-2.04-10.38-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9 4.56-1.02 8.4-.6 11.4 1.32.42.24.48.66.24 1.02zm1.44-3.3c-.3.42-.84.6-1.26.3-3.18-1.92-8.04-2.46-11.82-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14 4.2-1.26 9.48-.66 13.02 1.56.42.24.54.84.3 1.26zm.12-3.36C15.24 8.4 8.28 8.16 4.2 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.68-1.44 12.24-1.14 16.8 1.74.54.3.72 1.02.42 1.56-.3.48-1.02.66-1.56.42z"
 						/>

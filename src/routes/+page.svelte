@@ -80,8 +80,12 @@
 		<!-- Foreground Content -->
 		<div class="relative z-0 mx-auto flex min-h-screen max-w-2xl flex-col space-y-6 p-4">
 			<header class="flex items-center justify-between">
-				<div class="flex items-center gap-2">
-					<img class="h-8 w-8 opacity-90" src="/logo-gray.svg" alt="Logo" />
+				<div class="flex items-center gap-1">
+					<svg class="size-8 opacity-90" viewBox="26 13 68 94">
+						<rect width="16" height="60" x="28" y="30" fill="#E5E7EB" rx="3" />
+						<rect width="16" height="90" x="52" y="15" fill="#D1D5DB" rx="3" />
+						<rect width="16" height="30" x="76" y="45" fill="#E5E7EB" rx="3" />
+					</svg>
 					<h1 class="text-xl font-light tracking-wider opacity-100">SHUFLOW</h1>
 				</div>
 				<button
@@ -89,7 +93,7 @@
 					onpointerdown={() => (showLogoutConfirmation = true)}
 					aria-label="Logout"
 				>
-					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
