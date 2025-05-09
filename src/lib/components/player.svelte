@@ -118,7 +118,7 @@
 			// to avoid missing some seconds in the position in the UI. The delta is also approximate
 			// and should be greater than a second.
 			const delta = playback.position - position
-			if (delta > 0 && delta < 1000) {
+			if (Math.abs(delta) < 3000) {
 				position = Math.min(playback.position, item.track.duration_ms)
 			} else {
 				position += 500
@@ -188,12 +188,20 @@
 	}
 
 	async function previousTrack() {
+		if (nextTrackTimeout) {
+			clearTimeout(nextTrackTimeout)
+			nextTrackTimeout = null
+		}
 		if (!deviceId) return
 		item = await queue.previous()
 		await play()
 	}
 
 	async function seek(positionNew: number) {
+		if (nextTrackTimeout) {
+			clearTimeout(nextTrackTimeout)
+			nextTrackTimeout = null
+		}
 		position = positionNew
 		await player.seek(positionNew)
 	}
@@ -237,7 +245,9 @@
 				onpointerdown={throttle(previousTrack)}
 				aria-label="Previous track"
 			>
-				<img class="h-6 w-6" src="/previous.svg" alt="Previous" />
+				<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M18.41 16.59 13.82 12l4.59-4.59L17 6l-6 6 6 6 1.41-1.41zM6 6h2v12H6V6z" />
+				</svg>
 			</button>
 			<button
 				class="p-5 bg-white/10 hover:bg-white/20 rounded-full"
@@ -245,9 +255,13 @@
 				aria-label={paused ? 'Play' : 'Pause'}
 			>
 				{#if paused}
-					<img class="h-6 w-6" src="/play.svg" alt="Play" />
+					<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M8 5v14l11-7z" />
+					</svg>
 				{:else}
-					<img class="h-6 w-6" src="/pause.svg" alt="Pause" />
+					<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+					</svg>
 				{/if}
 			</button>
 			<button
@@ -255,7 +269,9 @@
 				onpointerdown={throttle(nextTrack)}
 				aria-label="Next track"
 			>
-				<img class="h-6 w-6" src="/next.svg" alt="Next" />
+				<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M5.59 7.41 10.18 12l-4.59 4.59L7 18l6-6-6-6-1.41 1.41zM16 6h2v12h-2V6z" />
+				</svg>
 			</button>
 		</div>
 	{/if}

@@ -57,7 +57,7 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle ?? 'Shuflow • Shuffle Your Favorite Music'}</title>
+	<title>{pageTitle ?? 'Shuflow • Your Favorites on Shuffle'}</title>
 </svelte:head>
 
 {#if authenticated}
@@ -89,7 +89,14 @@
 					onpointerdown={() => (showLogoutConfirmation = true)}
 					aria-label="Logout"
 				>
-					<img class="h-6 w-6" src="/logout.svg" alt="Logout" />
+					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="1.5"
+							d="m17 16 4-4m0 0-4-4m4 4H7m6 4v1a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1"
+						/>
+					</svg>
 				</button>
 			</header>
 
