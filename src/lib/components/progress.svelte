@@ -6,6 +6,7 @@
 	}
 
 	let { duration, position, onPositionUpdate = () => {} }: Props = $props()
+
 	let positionCurrent = $state(position)
 	let isSeeking = $state(false)
 	let isWaitingForNewPosition = $state(false)

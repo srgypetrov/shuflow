@@ -119,9 +119,7 @@
 			// and should be greater than a second.
 			const delta = playback.position - position
 			if (Math.abs(delta) < 3000) {
-				position = Math.min(playback.position, item.track.duration_ms)
-			} else {
-				position += 500
+				position = Math.max(Math.min(playback.position, item.track.duration_ms), position)
 			}
 
 			const remaining = item ? item.track.duration_ms - position : null
