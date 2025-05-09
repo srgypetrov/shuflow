@@ -3,7 +3,7 @@
 
 	import { goto } from '$app/navigation'
 
-	import LogoutConfirmationModal from '$lib/components/confirmation.svelte'
+	import Menu from '$lib/components/menu.svelte'
 	import Player from '$lib/components/player.svelte'
 	import { LibraryManager } from '$lib/manager.svelte'
 	import { Queue } from '$lib/queue'
@@ -18,7 +18,6 @@
 	let isColorsChanged = $state(false)
 
 	let authenticated = $state(false)
-	let showLogoutConfirmation = $state(false)
 
 	let manager = new LibraryManager()
 	let queue = new Queue(manager)
@@ -88,20 +87,7 @@
 					</svg>
 					<h1 class="text-xl font-light tracking-wider opacity-100">SHUFLOW</h1>
 				</div>
-				<button
-					class="flex items-center gap-1.5 rounded-md p-1.5 text-lg font-light tracking-wider opacity-100 transition-all hover:bg-white/10 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/20"
-					onpointerdown={() => (showLogoutConfirmation = true)}
-					aria-label="Logout"
-				>
-					<svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="1.5"
-							d="m17 16 4-4m0 0-4-4m4 4H7m6 4v1a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1"
-						/>
-					</svg>
-				</button>
+				<Menu {logout} colors={colorsCurrent} />
 			</header>
 
 			<Player {queue} bind:pageTitle bind:colors={colorsCurrent} />
@@ -115,6 +101,4 @@
 			</div>
 		</div>
 	</div>
-
-	<LogoutConfirmationModal bind:isOpen={showLogoutConfirmation} action={logout} />
 {/if}
