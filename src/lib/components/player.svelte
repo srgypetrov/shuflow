@@ -237,38 +237,36 @@
 		<Progress duration={track?.duration_ms || 0} {position} onPositionUpdate={seek}></Progress>
 
 		<!-- Controls -->
-		<div class="mb-6 flex items-center justify-center gap-4">
+		<div class="mb-6 flex items-center justify-center gap-5">
 			<button
-				class="rounded-full p-3 opacity-90 hover:bg-white/10 hover:opacity-100"
+				class="rounded-full p-3 text-neutral-300 transition-colors transition-transform hover:scale-[1.04] hover:text-gray-100 active:bg-gray-100/30"
 				onpointerdown={throttle(previousTrack)}
 				aria-label="Previous track"
 			>
-				<svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M18.41 16.59 13.82 12l4.59-4.59L17 6l-6 6 6 6 1.41-1.41zM6 6h2v12H6V6z" />
+				<svg class="size-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M6 6h2v12H6zm11.41 10.59L12.83 12l4.58-4.59L16 6l-6 6 6 6z" />
 				</svg>
 			</button>
 			<button
-				class="rounded-full bg-white/10 p-5 hover:bg-white/20"
+				class="rounded-full bg-gray-100/20 p-3 transition-colors transition-transform hover:scale-[1.03] active:bg-gray-100/30"
 				onpointerdown={togglePlay}
 				aria-label={paused ? 'Play' : 'Pause'}
 			>
-				{#if paused}
-					<svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+				<svg class="size-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+					{#if paused}
 						<path d="M8 5v14l11-7z" />
-					</svg>
-				{:else}
-					<svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-					</svg>
-				{/if}
+					{:else}
+						<path d="M6 19h4V5H6zm8-14v14h4V5z" />
+					{/if}
+				</svg>
 			</button>
 			<button
-				class="rounded-full p-3 opacity-90 hover:bg-white/10 hover:opacity-100"
+				class="rounded-full p-3 text-neutral-300 transition-colors transition-transform hover:scale-[1.04] hover:text-gray-100 active:bg-gray-100/30"
 				onpointerdown={throttle(nextTrack)}
 				aria-label="Next track"
 			>
-				<svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
-					<path d="M5.59 7.41 10.18 12l-4.59 4.59L7 18l6-6-6-6-1.41 1.41zM16 6h2v12h-2V6z" />
+				<svg class="size-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M7.59 7.41L12.17 12l-4.58 4.59L9 18l6-6-6-6zM16 6h2v12h-2z" />
 				</svg>
 			</button>
 		</div>

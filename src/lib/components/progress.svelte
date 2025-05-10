@@ -68,7 +68,7 @@
 			class="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 transform rounded-full bg-white/10"
 		></div>
 		<div
-			class="absolute left-0 top-1/2 h-1 -translate-y-1/2 transform rounded-full bg-white transition-all duration-100 group-hover:bg-white/70"
+			class="absolute left-0 top-1/2 h-1 -translate-y-1/2 transform rounded-full bg-white/90 transition-all duration-100 group-hover:bg-white/70"
 			style:width={`${(positionCurrent / duration) * 100 || 0}%`}
 		></div>
 	</div>
