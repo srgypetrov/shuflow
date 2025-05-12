@@ -65,18 +65,15 @@
 
 	{#if show}
 		<div
-			class="absolute right-0 z-20 mt-2 w-auto min-w-40 rounded-md border-2 border-white/10 shadow-lg ring-1 ring-black/10"
+			class="absolute right-0 z-20 mt-2 w-auto min-w-40 overflow-hidden rounded-md border-2 border-[rgba(46,46,46,0.55)] shadow-lg"
 			style="background-color: {color};"
 			transition:fly={{ y: -5, duration: 150, easing: quintOut }}
 		>
-			<a
-				class="block w-full rounded-t-md bg-black/30 px-4 py-2 text-left hover:bg-black/10"
-				href="/about"
-			>
+			<a class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10" href="/about">
 				About
 			</a>
 			<button
-				class="block w-full rounded-b-md bg-black/30 px-4 py-2 text-left hover:bg-black/10"
+				class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10"
 				onclick={onLogoutButtonClick}
 			>
 				Logout
