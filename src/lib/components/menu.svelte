@@ -65,7 +65,7 @@
 
 	{#if show}
 		<div
-			class="absolute right-0 z-20 mt-2 w-auto min-w-40 overflow-hidden rounded-md border-2 border-[rgba(46,46,46,0.55)] shadow-lg"
+			class="absolute right-0 z-20 mt-2 w-auto min-w-40 overflow-hidden rounded-md border-2 border-[rgba(69,69,69,0.37)] shadow-lg"
 			style="background-color: {color};"
 			transition:fly={{ y: -5, duration: 150, easing: quintOut }}
 		>

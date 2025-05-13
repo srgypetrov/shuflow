@@ -39,4 +39,4 @@
 	style="background-image: linear-gradient(to bottom right, {colors.join(', ')});"
 ></div>
 <!-- Overlay to keep text and controls readable -->
-<div class="pointer-events-none absolute inset-0 -z-10 bg-black/50"></div>
+<div class="pointer-events-none absolute inset-0 -z-10 bg-black/30"></div>
