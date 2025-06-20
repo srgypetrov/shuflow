@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LogoutConfirmationModal from '$lib/components/confirmation.svelte'
+	import Modal from '$lib/components/modal.svelte'
 	import { onMount } from 'svelte'
 	import { quintOut } from 'svelte/easing'
 	import { fly } from 'svelte/transition'
@@ -13,6 +13,7 @@
 
 	let color = $derived(tinycolor.mix(colors[0], colors[1], 50).toHexString())
 	let show = $state(false)
+	let showAbout = $state(false)
 	let showLogoutConfirmation = $state(false)
 
 	let containerRef: HTMLDivElement | null = null
@@ -43,9 +44,19 @@
 		}
 	}
 
+	function onAboutButtonClick() {
+		show = false
+		showAbout = true
+	}
+
 	function onLogoutButtonClick() {
 		show = false
 		showLogoutConfirmation = true
+	}
+
+	function handleLogoutConfirm() {
+		logout()
+		showLogoutConfirmation = false
 	}
 </script>
 
@@ -69,9 +80,12 @@
 			style="background-color: {color};"
 			transition:fly={{ y: -5, duration: 150, easing: quintOut }}
 		>
-			<a class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10" href="/about">
+			<button
+				class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10"
+				onclick={onAboutButtonClick}
+			>
 				About
-			</a>
+			</button>
 			<button
 				class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10"
 				onclick={onLogoutButtonClick}
@@ -82,4 +96,55 @@
 	{/if}
 </div>
 
-<LogoutConfirmationModal bind:isOpen={showLogoutConfirmation} action={logout} />
+<Modal bind:isOpen={showAbout} title="About Shuflow">
+	{#snippet children()}
+		<div class="space-y-4">
+			<p>Shuflow provides a continuous music flow from your Spotify favorites.</p>
+			<p>
+				This application is designed to give you a seamless listening experience, shuffling through
+				your liked songs, albums, artists, and playlists to create a personalized radio just for
+				you.
+			</p>
+			<p>Enjoy the music!</p>
+		</div>
+	{/snippet}
+	{#snippet actions()}
+		<a
+			href="https://docs.google.com/forms/d/e/1FAIpQLScWk4cE7DfGsUSnk7y4s-vTWxdUsYy2YU7k1sV21IFRn0wpug/viewform?usp=dialog"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+		>
+			Feedback
+		</a>
+		<button
+			onclick={() => (showAbout = false)}
+			class="rounded-lg bg-gray-700 px-4 py-2 text-gray-300 transition-colors hover:bg-gray-600"
+		>
+			Close
+		</button>
+	{/snippet}
+</Modal>
+
+<Modal bind:isOpen={showLogoutConfirmation} title="Logout">
+	{#snippet children()}
+		<p>
+			Are you sure you want to log out? This will clear all downloaded metadata and reset your
+			settings.
+		</p>
+	{/snippet}
+	{#snippet actions()}
+		<button
+			onclick={() => (showLogoutConfirmation = false)}
+			class="rounded-lg bg-gray-700 px-4 py-2 text-gray-300 transition-colors hover:bg-gray-600"
+		>
+			Cancel
+		</button>
+		<button
+			onclick={handleLogoutConfirm}
+			class="rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
+		>
+			Confirm
+		</button>
+	{/snippet}
+</Modal>
