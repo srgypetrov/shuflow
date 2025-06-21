@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AboutModal from '$lib/components/about.svelte'
 	import Modal from '$lib/components/modal.svelte'
 	import { onMount } from 'svelte'
 	import { quintOut } from 'svelte/easing'
@@ -53,11 +54,6 @@
 		show = false
 		showLogoutConfirmation = true
 	}
-
-	function handleLogoutConfirm() {
-		logout()
-		showLogoutConfirmation = false
-	}
 </script>
 
 <div class="relative" bind:this={containerRef}>
@@ -96,35 +92,7 @@
 	{/if}
 </div>
 
-<Modal bind:isOpen={showAbout} title="About Shuflow">
-	{#snippet children()}
-		<div class="space-y-4">
-			<p>Shuflow provides a continuous music flow from your Spotify favorites.</p>
-			<p>
-				This application is designed to give you a seamless listening experience, shuffling through
-				your liked songs, albums, artists, and playlists to create a personalized radio just for
-				you.
-			</p>
-			<p>Enjoy the music!</p>
-		</div>
-	{/snippet}
-	{#snippet actions()}
-		<a
-			href="https://docs.google.com/forms/d/e/1FAIpQLScWk4cE7DfGsUSnk7y4s-vTWxdUsYy2YU7k1sV21IFRn0wpug/viewform?usp=dialog"
-			target="_blank"
-			rel="noopener noreferrer"
-			class="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-		>
-			Feedback
-		</a>
-		<button
-			onclick={() => (showAbout = false)}
-			class="rounded-lg bg-gray-700 px-4 py-2 text-gray-300 transition-colors hover:bg-gray-600"
-		>
-			Close
-		</button>
-	{/snippet}
-</Modal>
+<AboutModal bind:isOpen={showAbout} />
 
 <Modal bind:isOpen={showLogoutConfirmation} title="Logout">
 	{#snippet children()}
@@ -141,7 +109,7 @@
 			Cancel
 		</button>
 		<button
-			onclick={handleLogoutConfirm}
+			onclick={logout}
 			class="rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
 		>
 			Confirm

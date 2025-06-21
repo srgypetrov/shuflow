@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation'
+	import AboutModal from '$lib/components/about.svelte'
+
+	let showAbout = $state(false)
 
 	function login() {
 		goto('/callback')
@@ -13,6 +16,29 @@
 <div
 	class="h-full bg-gradient-to-br from-gray-900 via-gray-800 to-black font-sans text-gray-200 antialiased"
 >
+	<div class="absolute right-4 top-4">
+		<button
+			onclick={() => (showAbout = true)}
+			class="text-gray-400 hover:text-white"
+			aria-label="About Shuflow"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-6 w-6"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+				/>
+			</svg>
+		</button>
+	</div>
+
 	<div class="flex min-h-screen items-center justify-center p-4 sm:p-6 md:p-12">
 		<div class="w-full max-w-md space-y-6 rounded-xl p-6 sm:p-8 md:p-10">
 			<div class="space-y-5 text-center">
@@ -29,7 +55,7 @@
 
 			<div class="space-y-4">
 				<button
-					on:click={login}
+					onclick={login}
 					class="focusable relative flex w-full transform items-center justify-center rounded-lg bg-green-500/90 px-6 py-4 font-semibold text-gray-800 transition-all duration-200 hover:bg-green-400 focus:bg-green-400 active:scale-[0.98]"
 				>
 					<svg class="mr-3 size-5" fill="currentColor" viewBox="0 0 24 24">
@@ -49,3 +75,5 @@
 		</div>
 	</div>
 </div>
+
+<AboutModal bind:isOpen={showAbout} />
