@@ -1,4 +1,4 @@
-import type { EntityTable, InsertType, UpdateSpec } from 'dexie'
+import type { Collection, EntityTable, InsertType } from 'dexie'
 import Dexie, { Entity } from 'dexie'
 
 const VERSION = 1
@@ -59,25 +59,25 @@ class DB extends Dexie {
 	playlists!: EntityTable<PlaylistTable, 'id'>
 	tracks!: EntityTable<TrackTable, 'id'>
 
-	protected config!: EntityTable<ConfigTable, 'id'>
+	protected _config!: EntityTable<ConfigTable, 'id'>
 
 	constructor() {
 		super('ShuflowLibrary')
 		this.version(VERSION).stores({
+			_config: 'id',
 			albums: '++id, isActive, &spotifyId',
 			artists: '++id, isActive, &spotifyId',
-			config: 'id',
 			playlists: '++id, isActive, &spotifyId',
 			tracks: '++id, isActive, &spotifyId'
 		})
+		this._config.mapToClass(ConfigTable)
 		this.albums.mapToClass(AlbumTable)
 		this.artists.mapToClass(ArtistTable)
-		this.config.mapToClass(ConfigTable)
 		this.playlists.mapToClass(PlaylistTable)
 		this.tracks.mapToClass(TrackTable)
 	}
 
-	async configCreate(): Promise<Config> {
+	async init() {
 		const config = {
 			id: VERSION,
 			isUsingAlbums: true,
@@ -86,16 +86,11 @@ class DB extends Dexie {
 			isUsingTracks: true,
 			libraryCreatedAt: new Date()
 		} as Config
-		await this.config.add(config)
-		return config
+		await this._config.add(config, VERSION)
 	}
 
-	async configGet() {
-		return await this.config.get(VERSION)
-	}
-
-	async configUpdate(config: UpdateSpec<Config>) {
-		await this.config.update(VERSION, config)
+	get config(): Collection {
+		return this._config.where('id').equals(VERSION)
 	}
 }
 

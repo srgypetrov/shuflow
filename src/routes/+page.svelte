@@ -56,12 +56,46 @@
 
 			<Player {queue} bind:pageTitle bind:colors />
 
-			<div class="!mt-0 py-1 text-center text-xs opacity-85">
-				{manager.counts.tracks}
-				{manager.counts.tracks === 1 ? 'track' : 'tracks'} • {manager.counts.albums}
-				{manager.counts.albums === 1 ? 'album' : 'albums'} • {manager.counts.playlists}
-				{manager.counts.playlists === 1 ? 'playlist' : 'playlists'} • {manager.counts.artists}
-				{manager.counts.artists === 1 ? 'artist' : 'artists'}
+			<div class="!mt-0 flex justify-center gap-2 py-1 text-center text-xs">
+				<button
+					class="line-through decoration-transparent opacity-85 transition hover:opacity-100"
+					class:!opacity-50={!manager.flags.isUsingTracks}
+					class:!decoration-current={!manager.flags.isUsingTracks}
+					onclick={() => manager.toggleFlag('isUsingTracks')}
+				>
+					{manager.counts.tracks}
+					{manager.counts.tracks === 1 ? 'track' : 'tracks'}
+				</button>
+				<span>•</span>
+				<button
+					class="line-through decoration-transparent opacity-85 transition hover:opacity-100"
+					class:!opacity-50={!manager.flags.isUsingAlbums}
+					class:!decoration-current={!manager.flags.isUsingAlbums}
+					onclick={() => manager.toggleFlag('isUsingAlbums')}
+				>
+					{manager.counts.albums}
+					{manager.counts.albums === 1 ? 'album' : 'albums'}
+				</button>
+				<span>•</span>
+				<button
+					class="line-through decoration-transparent opacity-85 transition hover:opacity-100"
+					class:!opacity-50={!manager.flags.isUsingPlaylists}
+					class:!decoration-current={!manager.flags.isUsingPlaylists}
+					onclick={() => manager.toggleFlag('isUsingPlaylists')}
+				>
+					{manager.counts.playlists}
+					{manager.counts.playlists === 1 ? 'playlist' : 'playlists'}
+				</button>
+				<span>•</span>
+				<button
+					class="line-through decoration-transparent opacity-85 transition hover:opacity-100"
+					class:!opacity-50={!manager.flags.isUsingArtists}
+					class:!decoration-current={!manager.flags.isUsingArtists}
+					onclick={() => manager.toggleFlag('isUsingArtists')}
+				>
+					{manager.counts.artists}
+					{manager.counts.artists === 1 ? 'artist' : 'artists'}
+				</button>
 			</div>
 		</div>
 	</div>

@@ -12,7 +12,7 @@ import type { Table } from 'dexie'
 
 import type { Config, DBAlbum, DBArtist, DBEntity, DBPlaylist, DBTrack } from '$lib/db'
 import { Binary, db } from '$lib/db'
-import { stateQuery } from '$lib/helpers.svelte'
+import { liveQueries } from '$lib/helpers.svelte'
 import { Paginator } from '$lib/paginator'
 import { Picker } from '$lib/picker'
 import { spotify } from '$lib/spotify'
@@ -30,11 +30,22 @@ export class LibraryManager {
 	private readonly reader: LibraryReader
 	private readonly writer: LibraryWriter
 
-	counts = stateQuery({
+	private state = liveQueries({
+		config: (): Promise<Config | undefined> => db.config.first()
+	})
+
+	counts = liveQueries({
 		albums: () => db.albums.where('isActive').notEqual(Binary.OFF).count(),
 		artists: () => db.artists.where('isActive').notEqual(Binary.OFF).count(),
 		playlists: () => db.playlists.where('isActive').notEqual(Binary.OFF).count(),
 		tracks: () => db.tracks.where('isActive').notEqual(Binary.OFF).count()
+	})
+
+	flags = $derived({
+		isUsingAlbums: this.state.config?.isUsingAlbums,
+		isUsingArtists: this.state.config?.isUsingArtists,
+		isUsingPlaylists: this.state.config?.isUsingPlaylists,
+		isUsingTracks: this.state.config?.isUsingTracks
 	})
 
 	constructor() {
@@ -44,7 +55,7 @@ export class LibraryManager {
 
 	async create(): Promise<void> {
 		if (await this.exists()) return
-		await db.configCreate()
+		await db.init()
 	}
 
 	async delete(): Promise<void> {
@@ -52,11 +63,11 @@ export class LibraryManager {
 	}
 
 	async exists(): Promise<boolean> {
-		return (await db.configGet()) !== undefined
+		return (await db.config.first()) !== undefined
 	}
 
 	async next(): Promise<PlayerItem | null> {
-		const config = await db.configGet()
+		const config = await db.config.first()
 		if (!config) return null
 		return this.reader.getRandomItem(config, this.counts)
 	}
@@ -71,9 +82,15 @@ export class LibraryManager {
 	}
 
 	async sync(force = false): Promise<void> {
-		const config = await db.configGet()
+		const config = await db.config.first()
 		if (!config || (!force && !this.isSyncNeeded(config))) return
 		return this.writer.sync(config)
+	}
+
+	async toggleFlag(entity: keyof typeof this.flags): Promise<void> {
+		const config = await db.config.first()
+		if (!config) return
+		await db.config.modify({ [entity]: !this.flags[entity] })
 	}
 
 	private isSyncNeeded(config: Config): boolean {
@@ -110,7 +127,7 @@ class LibraryWriter {
 			config.isUsingTracks && this.update(db.tracks, this.loadTracks.bind(this))
 		])
 			.then(async () => {
-				await db.configUpdate({ librarySyncedAt: new Date() })
+				await db.config.modify({ librarySyncedAt: new Date() })
 			})
 			.catch((error) => {
 				console.error('Library sync failed:', error)

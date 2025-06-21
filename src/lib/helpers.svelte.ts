@@ -1,22 +1,18 @@
-import { liveQuery } from 'dexie'
+import { liveQuery as dexieLiveQuery } from 'dexie'
 
-export function stateQuery<T>(
-	queries: Record<string, () => T | Promise<T>>,
-	dependencies?: () => unknown[]
-) {
-	const queryState = $state<{ [key: string]: T | undefined }>({})
+export function liveQueries<T>(queries: Record<string, () => T | Promise<T>>) {
+	const queriesState = $state<{ [key: string]: T }>({})
 
 	$effect(() => {
-		dependencies?.()
 		const subscriptions = Object.entries(queries).map(([key, querier]) =>
-			liveQuery(querier).subscribe((value) => {
-				if (value !== undefined) queryState[key] = value
+			dexieLiveQuery(querier).subscribe((value) => {
+				if (value !== undefined) queriesState[key] = value
 			})
 		)
 		return () => subscriptions.forEach((sub) => sub.unsubscribe())
 	})
 
-	return queryState
+	return queriesState
 }
 
 export function throttle(callback: (...args: unknown[]) => unknown, delay = 500) {
