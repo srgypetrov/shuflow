@@ -39,6 +39,8 @@
 		return { type: 'track' }
 	})
 
+	// — Lifecycle —
+
 	onMount(async () => {
 		setFirstTrack()
 		const script = document.createElement('script')
@@ -48,13 +50,78 @@
 		window.onSpotifyWebPlaybackSDKReady = init
 		window.addEventListener('keydown', onKeydown)
 		document.addEventListener('visibilitychange', onVisibilityChange)
+		setupMediaSession()
 	})
 
 	onDestroy(() => {
 		if (player) player.disconnect()
 		window.removeEventListener('keydown', onKeydown)
 		document.removeEventListener('visibilitychange', onVisibilityChange)
+		destroyMediaSession()
 	})
+
+	function setupMediaSession() {
+		if (!('mediaSession' in navigator)) return
+
+		navigator.mediaSession.setActionHandler('play', togglePlay)
+		navigator.mediaSession.setActionHandler('pause', togglePlay)
+		navigator.mediaSession.setActionHandler('previoustrack', previousTrack)
+		navigator.mediaSession.setActionHandler('nexttrack', nextTrack)
+		navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+			const skipTime = details.seekOffset || 10
+			seek(Math.max(position - skipTime * 1000, 0))
+		})
+		navigator.mediaSession.setActionHandler('seekforward', (details) => {
+			if (!track) return
+			const skipTime = details.seekOffset || 10
+			seek(Math.min(position + skipTime * 1000, track.duration_ms))
+		})
+		navigator.mediaSession.setActionHandler('seekto', (details) => {
+			if (details.seekTime !== null && details.seekTime !== undefined) {
+				seek(details.seekTime * 1000)
+			}
+		})
+	}
+
+	function destroyMediaSession() {
+		if (!('mediaSession' in navigator)) return
+
+		navigator.mediaSession.setActionHandler('play', null)
+		navigator.mediaSession.setActionHandler('pause', null)
+		navigator.mediaSession.setActionHandler('previoustrack', null)
+		navigator.mediaSession.setActionHandler('nexttrack', null)
+		navigator.mediaSession.setActionHandler('seekbackward', null)
+		navigator.mediaSession.setActionHandler('seekforward', null)
+		navigator.mediaSession.setActionHandler('seekto', null)
+		navigator.mediaSession.metadata = null
+	}
+
+	function init() {
+		player = new window.Spotify.Player({
+			enableMediaSession: false,
+			name: 'Shuflow',
+			getOAuthToken: (cb) => {
+				spotify.authenticate().then((response) => {
+					if (!response.authenticated) return
+					cb(response.accessToken.access_token)
+				})
+			},
+			volume: 1
+		})
+		player.addListener('ready', ({ device_id }) => (deviceId = device_id))
+		player.addListener('not_ready', () => (deviceId = null))
+		player.addListener('player_state_changed', (playback: Spotify.PlaybackState) => {
+			if (!playback) return
+			paused = playback.paused
+			if (track !== playback.track_window.current_track) {
+				track = playback.track_window.current_track
+				setColors()
+			}
+		})
+		player.connect()
+	}
+
+	// — Handlers —
 
 	function onKeydown(event: KeyboardEvent) {
 		// Ignore if modifier keys are pressed or if input elements are focused
@@ -81,30 +148,7 @@
 		}
 	}
 
-	function init() {
-		player = new window.Spotify.Player({
-			enableMediaSession: true,
-			name: 'Shuflow',
-			getOAuthToken: (cb) => {
-				spotify.authenticate().then((response) => {
-					if (!response.authenticated) return
-					cb(response.accessToken.access_token)
-				})
-			},
-			volume: 1
-		})
-		player.addListener('ready', ({ device_id }) => (deviceId = device_id))
-		player.addListener('not_ready', () => (deviceId = null))
-		player.addListener('player_state_changed', (playback: Spotify.PlaybackState) => {
-			if (!playback) return
-			paused = playback.paused
-			if (track !== playback.track_window.current_track) {
-				track = playback.track_window.current_track
-				setColors()
-			}
-		})
-		player.connect()
-	}
+	// — Effects —
 
 	$effect(() => {
 		const interval = setInterval(async () => {
@@ -141,6 +185,27 @@
 		}
 	})
 
+	$effect(() => {
+		if (!('mediaSession' in navigator)) return
+
+		if (track) {
+			navigator.mediaSession.metadata = new MediaMetadata({
+				title: track.name,
+				artist: artistName ?? undefined,
+				album: track.album.name,
+				artwork: track.album.images.map((image) => ({
+					src: image.url,
+					sizes: `${image.width}x${image.height}`,
+					type: 'image/jpeg'
+				}))
+			})
+		}
+
+		navigator.mediaSession.playbackState = paused ? 'paused' : 'playing'
+	})
+
+	// — Helpers —
+
 	async function setColors() {
 		if (!track?.album?.images[0].url) return
 		const from = await average(track.album.images[0].url, { format: 'hex' })
@@ -163,6 +228,8 @@
 		return null
 	}
 
+	// — Controls —
+
 	async function play() {
 		if (!deviceId || !item) return
 		position = 0
@@ -171,8 +238,13 @@
 
 	async function togglePlay() {
 		if (!deviceId) return
-		if (track === item?.track) return await play()
-		await player.togglePlay()
+		if (track === item?.track) {
+			await play()
+		} else if (paused) {
+			await player.resume()
+		} else {
+			await player.pause()
+		}
 	}
 
 	async function nextTrack() {
