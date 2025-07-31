@@ -311,7 +311,7 @@
 		<!-- Controls -->
 		<div class="mb-6 flex items-center justify-center gap-5">
 			<button
-				class="rounded-full p-3 text-neutral-300 transition-colors transition-transform hover:scale-[1.04] hover:text-gray-100 active:bg-gray-100/30"
+				class="rounded-full p-3 text-neutral-300 transition-colors transition-transform hover:scale-[1.04] hover:text-gray-100 focus:outline-none active:bg-gray-100/30"
 				onpointerdown={throttle(previousTrack)}
 				aria-label="Previous track"
 			>
@@ -320,7 +320,7 @@
 				</svg>
 			</button>
 			<button
-				class="rounded-full bg-gray-100/20 p-3 transition-colors transition-transform hover:scale-[1.03] active:bg-gray-100/30"
+				class="rounded-full bg-gray-100/20 p-3 transition-colors transition-transform hover:scale-[1.03] focus:outline-none active:bg-gray-100/30"
 				onpointerdown={togglePlay}
 				aria-label={paused ? 'Play' : 'Pause'}
 			>
@@ -333,7 +333,7 @@
 				</svg>
 			</button>
 			<button
-				class="rounded-full p-3 text-neutral-300 transition-colors transition-transform hover:scale-[1.04] hover:text-gray-100 active:bg-gray-100/30"
+				class="rounded-full p-3 text-neutral-300 transition-colors transition-transform hover:scale-[1.04] hover:text-gray-100 focus:outline-none active:bg-gray-100/30"
 				onpointerdown={throttle(nextTrack)}
 				aria-label="Next track"
 			>
