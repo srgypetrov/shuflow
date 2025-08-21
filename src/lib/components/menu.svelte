@@ -58,7 +58,7 @@
 
 <div class="relative" bind:this={containerRef}>
 	<button
-		class="flex items-center gap-1.5 rounded-md p-1.5 text-lg font-light tracking-wider opacity-100 transition-all hover:bg-white/10"
+		class="flex items-center gap-1.5 rounded-md p-1.5 text-lg font-light tracking-wider opacity-100 transition-all hover:bg-white/10 focus:outline-none"
 		onclick={toggle}
 	>
 		<svg class="size-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,13 +77,13 @@
 			transition:fly={{ y: -5, duration: 150, easing: quintOut }}
 		>
 			<button
-				class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10"
+				class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10 focus:outline-none"
 				onclick={onAboutButtonClick}
 			>
 				About
 			</button>
 			<button
-				class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10"
+				class="block w-full bg-black/30 px-4 py-2 text-left hover:bg-black/10 focus:outline-none"
 				onclick={onLogoutButtonClick}
 			>
 				Logout
@@ -104,13 +104,13 @@
 	{#snippet actions()}
 		<button
 			onclick={() => (showLogoutConfirmation = false)}
-			class="rounded-lg bg-gray-700 px-4 py-2 text-gray-300 transition-colors hover:bg-gray-600"
+			class="rounded-lg bg-gray-700 px-4 py-2 text-gray-300 transition-colors hover:bg-gray-600 focus:outline-none"
 		>
 			Cancel
 		</button>
 		<button
 			onclick={logout}
-			class="rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
+			class="rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 focus:outline-none"
 		>
 			Confirm
 		</button>

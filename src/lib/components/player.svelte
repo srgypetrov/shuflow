@@ -284,7 +284,7 @@
 		<!-- Artwork -->
 		<button
 			type="button"
-			class="group relative mx-auto mb-6 aspect-square w-full max-w-sm cursor-default overflow-hidden rounded-xl border-2 border-white/10 bg-transparent p-0 shadow-2xl md:max-w-md lg:max-w-lg"
+			class="group relative mx-auto mb-6 aspect-square w-full max-w-sm cursor-default overflow-hidden rounded-xl border-2 border-white/10 bg-transparent p-0 shadow-2xl focus:outline-none md:max-w-md lg:max-w-lg"
 		>
 			<img src={track.album.images[0]?.url} alt={track.name} class="h-full w-full object-cover" />
 			<div

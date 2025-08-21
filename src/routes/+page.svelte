@@ -58,7 +58,7 @@
 
 			<div class="!mt-0 flex justify-center gap-2 py-1 text-center text-xs">
 				<button
-					class="line-through decoration-transparent opacity-85 transition hover:opacity-100"
+					class="line-through decoration-transparent opacity-85 transition hover:opacity-100 focus:outline-none"
 					class:!opacity-50={!manager.flags.isUsingTracks}
 					class:!decoration-current={!manager.flags.isUsingTracks}
 					onclick={() => manager.toggleFlag('isUsingTracks')}
@@ -68,7 +68,7 @@
 				</button>
 				<span>•</span>
 				<button
-					class="line-through decoration-transparent opacity-85 transition hover:opacity-100"
+					class="line-through decoration-transparent opacity-85 transition hover:opacity-100 focus:outline-none"
 					class:!opacity-50={!manager.flags.isUsingAlbums}
 					class:!decoration-current={!manager.flags.isUsingAlbums}
 					onclick={() => manager.toggleFlag('isUsingAlbums')}
@@ -78,7 +78,7 @@
 				</button>
 				<span>•</span>
 				<button
-					class="line-through decoration-transparent opacity-85 transition hover:opacity-100"
+					class="line-through decoration-transparent opacity-85 transition hover:opacity-100 focus:outline-none"
 					class:!opacity-50={!manager.flags.isUsingPlaylists}
 					class:!decoration-current={!manager.flags.isUsingPlaylists}
 					onclick={() => manager.toggleFlag('isUsingPlaylists')}
@@ -88,7 +88,7 @@
 				</button>
 				<span>•</span>
 				<button
-					class="line-through decoration-transparent opacity-85 transition hover:opacity-100"
+					class="line-through decoration-transparent opacity-85 transition hover:opacity-100 focus:outline-none"
 					class:!opacity-50={!manager.flags.isUsingArtists}
 					class:!decoration-current={!manager.flags.isUsingArtists}
 					onclick={() => manager.toggleFlag('isUsingArtists')}

@@ -19,7 +19,7 @@
 	<div class="absolute right-4 top-4">
 		<button
 			onclick={() => (showAbout = true)}
-			class="text-gray-400 hover:text-white"
+			class="text-gray-400 hover:text-white focus:outline-none"
 			aria-label="About Shuflow"
 		>
 			<svg
@@ -56,7 +56,7 @@
 			<div class="space-y-4">
 				<button
 					onclick={login}
-					class="focusable relative flex w-full transform items-center justify-center rounded-lg bg-green-500/90 px-6 py-4 font-semibold text-gray-800 transition-all duration-200 hover:bg-green-400 focus:bg-green-400 active:scale-[0.98]"
+					class="focusable relative flex w-full transform items-center justify-center rounded-lg bg-green-500/90 px-6 py-4 font-semibold text-gray-800 transition-all duration-200 hover:bg-green-400 focus:bg-green-400 focus:outline-none active:scale-[0.98]"
 				>
 					<svg class="mr-3 size-5" fill="currentColor" viewBox="0 0 24 24">
 						<path
