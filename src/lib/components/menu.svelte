@@ -60,6 +60,7 @@
 	<button
 		class="flex items-center gap-1.5 rounded-md p-1.5 text-lg font-light tracking-wider opacity-100 transition-all hover:bg-white/10 focus:outline-none"
 		onclick={toggle}
+		onmousedown={(e) => e.preventDefault()}
 	>
 		<svg class="size-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			{#if show}
