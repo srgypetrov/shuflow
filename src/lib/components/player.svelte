@@ -167,7 +167,7 @@
 			}
 
 			const remaining = item ? item.track.duration_ms - position : null
-			if (remaining !== null && remaining < 2000 && !nextTrackTimeout) {
+			if (remaining !== null && remaining < 5000 && !nextTrackTimeout) {
 				// Subtract 500ms to avoid track pausing at the end
 				nextTrackTimeout = setTimeout(async () => nextTrack(), Math.max(remaining - 500, 0))
 			}
@@ -206,14 +206,18 @@
 
 	// — Helpers —
 
+	async function prefetchNextCover(): Promise<void> {
+		const item = await queue.peek()
+		const url = item?.track.album.images[0]?.url
+		if (!url) return
+		const img = new Image()
+		img.decoding = 'async'
+		img.src = url
+	}
+
 	async function setColors() {
-		if (!track?.album?.images?.length) return
-		const smallest = track.album.images.reduce((min, img) => {
-			const w1 = min.width ?? Infinity
-			const w2 = img.width ?? Infinity
-			return w2 < w1 ? img : min
-		})
-		const from = await average(smallest.url, { format: 'hex' })
+		if (!track?.album?.images[0].url) return
+		const from = await average(track.album.images[0].url, { format: 'hex' })
 		const color = tinycolor(from as string)
 		const to = color.isDark() ? color.lighten(40) : color.darken(40)
 		colors = [from as string, to.toString()]
@@ -226,6 +230,7 @@
 			if (!item) continue
 			track = item.track
 			setColors()
+			prefetchNextCover()
 			if (item !== null) return
 			await new Promise((r) => setTimeout(r, 3000))
 			attempts++
@@ -259,6 +264,7 @@
 		}
 		if (!deviceId) return
 		item = await queue.next()
+		prefetchNextCover()
 		await play()
 	}
 
@@ -291,7 +297,12 @@
 			type="button"
 			class="group relative mx-auto mb-6 aspect-square w-full max-w-sm cursor-default overflow-hidden rounded-xl border-2 border-white/10 bg-transparent p-0 shadow-2xl focus:outline-none md:max-w-md lg:max-w-lg"
 		>
-			<img src={track.album.images[0]?.url} alt={track.name} class="h-full w-full object-cover" />
+			<img
+				src={track.album.images[0]?.url}
+				alt={track.name}
+				class="h-full w-full object-cover"
+				fetchpriority="high"
+			/>
 			<div
 				class="pointer-events-none absolute left-1/2 top-2 max-w-full -translate-x-1/2 transform truncate rounded bg-black bg-opacity-60 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-focus:opacity-100 sm:group-hover:opacity-100"
 			>

@@ -35,22 +35,24 @@ export class Queue<T> {
 	}
 
 	async next(): Promise<T | null> {
-		if (this.index >= this.items.length) {
+		const item = await this.peek()
+		if (item === null) return null
+		if (this.reverse) {
+			this.reverse = false
+			this.index++
+		}
+		this.index++
+		this.schedule()
+		return item
+	}
+
+	async peek(): Promise<T | null> {
+		const index = this.reverse ? this.index + 1 : this.index
+		if (index >= this.items.length) {
 			this.schedule()
 			await this.promise
 		}
-
-		if (this.index < this.items.length) {
-			if (this.reverse) {
-				this.reverse = false
-				this.index++
-			}
-			const item = this.items[this.index++]
-			this.schedule()
-			return item
-		}
-
-		return null
+		return index < this.items.length ? this.items[index] : null
 	}
 
 	previous(): T | null {
