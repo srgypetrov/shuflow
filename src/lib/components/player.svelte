@@ -207,8 +207,13 @@
 	// — Helpers —
 
 	async function setColors() {
-		if (!track?.album?.images[0].url) return
-		const from = await average(track.album.images[0].url, { format: 'hex' })
+		if (!track?.album?.images?.length) return
+		const smallest = track.album.images.reduce((min, img) => {
+			const w1 = min.width ?? Infinity
+			const w2 = img.width ?? Infinity
+			return w2 < w1 ? img : min
+		})
+		const from = await average(smallest.url, { format: 'hex' })
 		const color = tinycolor(from as string)
 		const to = color.isDark() ? color.lighten(40) : color.darken(40)
 		colors = [from as string, to.toString()]

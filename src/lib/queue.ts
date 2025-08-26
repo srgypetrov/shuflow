@@ -1,3 +1,17 @@
+/**
+ * A thin queue wrapper that maintains its own playback history.
+ *
+ * We can't rely on Spotify's queue directly because it doesn't expose or retain
+ * playback history - once a track has been played there is no built-in way to step
+ * back to it through the queue. To support going "back" to previous items, this
+ * queue stores items internally as they are fetched.
+ *
+ * Additionally, we cannot rely on Spotify's queue for upcoming tracks: when combined with
+ * Player API endpoints, the execution order may be non-deterministic, which leads to
+ * unstable behavior. This local queue ensures deterministic next/previous behavior and
+ * consistent history.
+ *
+ */
 export class Queue<T> {
 	private index = 0
 	private items: T[] = []
