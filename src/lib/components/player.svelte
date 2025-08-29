@@ -31,6 +31,7 @@
 		if (!track) return null
 		return track.artists.map((a) => a.name).join(', ')
 	})
+
 	let source = $derived.by(() => {
 		if (!item) return { type: 'track' }
 		if (item.artist) return { type: 'artist', name: item.artist.name }
@@ -316,7 +317,16 @@
 		<div class="text-shadow mb-6 space-y-1 text-center">
 			{#key track.uri}
 				<div in:fade>
-					<h2 class="text-2xl font-medium">{track.name}</h2>
+					<h2 class="text-2xl font-medium">
+						<a
+							href={item?.track?.external_urls?.spotify}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="hover:underline"
+						>
+							{track.name}
+						</a>
+					</h2>
 					<p class="text-sm opacity-85">{artistName}</p>
 				</div>
 			{/key}
