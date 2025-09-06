@@ -39,24 +39,26 @@
 </svelte:head>
 
 {#if authenticated}
-	<div class="relative h-full min-h-screen font-sans text-gray-100 antialiased">
+	<div
+		class="relative h-[100svh] min-w-[360px] overflow-hidden font-sans text-gray-100 antialiased"
+	>
 		<Background {colors} />
-		<div class="relative z-0 mx-auto flex min-h-screen max-w-2xl flex-col space-y-6 p-4">
-			<header class="flex items-center justify-between">
-				<div class="flex items-center gap-2">
-					<svg class="size-8 opacity-90" viewBox="26 13 68 94">
-						<rect width="16" height="60" x="28" y="30" fill="#E5E7EB" rx="3" />
-						<rect width="16" height="90" x="52" y="15" fill="#D1D5DB" rx="3" />
-						<rect width="16" height="30" x="76" y="45" fill="#E5E7EB" rx="3" />
-					</svg>
-					<h1 class="text-xl font-light tracking-wider opacity-100">SHUFLOW</h1>
-				</div>
-				<Menu {logout} {colors} />
-			</header>
+		<header class="fixed inset-x-0 top-0 z-10 flex h-16 items-center justify-between px-8">
+			<div class="flex items-center gap-2">
+				<svg class="size-8 opacity-90" viewBox="26 13 68 94">
+					<rect width="16" height="60" x="28" y="30" fill="#E5E7EB" rx="3" />
+					<rect width="16" height="90" x="52" y="15" fill="#D1D5DB" rx="3" />
+					<rect width="16" height="30" x="76" y="45" fill="#E5E7EB" rx="3" />
+				</svg>
+				<h1 class="text-xl font-light tracking-wider opacity-100">SHUFLOW</h1>
+			</div>
+			<Menu {logout} {colors} />
+		</header>
 
+		<div class="absolute inset-x-0 bottom-3 top-16 z-0 mx-auto flex max-w-2xl flex-col px-4">
 			<Player {queue} bind:pageTitle bind:colors />
 
-			<div class="!mt-0 flex justify-center gap-2 py-1 text-center text-xs">
+			<div class="mb-0 flex flex-wrap justify-center gap-2 py-2 text-center text-xs">
 				<button
 					class="line-through decoration-transparent opacity-85 transition hover:opacity-100 focus:outline-none"
 					class:!opacity-50={!manager.flags.isUsingTracks}

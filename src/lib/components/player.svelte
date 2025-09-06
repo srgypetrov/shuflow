@@ -296,7 +296,7 @@
 		<!-- Artwork -->
 		<button
 			type="button"
-			class="group relative mx-auto mb-6 aspect-square w-full max-w-sm cursor-default overflow-hidden rounded-xl border-2 border-white/10 bg-transparent p-0 shadow-2xl focus:outline-none md:max-w-md lg:max-w-lg"
+			class="group relative mx-auto mb-6 mt-0 aspect-square w-full min-w-[14rem] max-w-[min(40rem,calc(100svh-4rem-280px))] cursor-default overflow-hidden rounded-xl border-2 border-white/10 bg-transparent p-0 shadow-2xl focus:outline-none"
 		>
 			<img
 				src={track.album.images[0]?.url}
@@ -335,7 +335,7 @@
 		<Progress duration={track?.duration_ms || 0} {position} onPositionUpdate={seek}></Progress>
 
 		<!-- Controls -->
-		<div class="mb-6 flex items-center justify-center gap-5">
+		<div class="mb-6 flex flex-wrap items-center justify-center gap-5">
 			<button
 				class="rounded-full p-3 text-neutral-300 transition-colors transition-transform hover:scale-[1.04] hover:text-gray-100 focus:outline-none active:bg-gray-100/30"
 				onpointerdown={throttle(previousTrack)}
