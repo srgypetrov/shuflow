@@ -5,7 +5,6 @@ Shuflow is a web-based music player that enables random playback across your ent
 A Spotify Premium account is required to use this application.
 
 > [!WARNING]
-> **Project Status: Self-Host Only**
 >
 > Public Spotify apps are now effectively available only to approved company/partner applications. See the official update: [Updating the Criteria for Web API Extended Access](https://developer.spotify.com/blog/2025-04-15-updating-the-criteria-for-web-api-extended-access).
 >
@@ -32,5 +31,3 @@ Install dependencies and run the development server:
 npm install
 npm run dev
 ```
-
-The app will be available at `http://localhost:5173`.
